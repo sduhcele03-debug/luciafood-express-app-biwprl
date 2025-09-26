@@ -2,8 +2,9 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { MenuItem } from '../lib/supabase';
 
-export interface CartItem extends MenuItem {
+interface CartItem extends MenuItem {
   quantity: number;
+  restaurant_id: string;
 }
 
 interface CartContextType {
@@ -18,43 +19,50 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
+export function useCart() {
+  const context = useContext(CartContext);
+  if (context === undefined) {
+    throw new Error('useCart must be used within a CartProvider');
+  }
+  return context;
+}
+
 export function CartProvider({ children }: { children: ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>([]);
 
   const addToCart = (item: MenuItem) => {
-    console.log('Cart: Adding item to cart:', item.name);
-    setCart(prevCart => {
-      const existingItem = prevCart.find(cartItem => cartItem.id === item.id);
+    setCart(currentCart => {
+      const existingItem = currentCart.find(cartItem => cartItem.id === item.id);
+      
       if (existingItem) {
-        return prevCart.map(cartItem =>
+        return currentCart.map(cartItem =>
           cartItem.id === item.id
             ? { ...cartItem, quantity: cartItem.quantity + 1 }
             : cartItem
         );
       } else {
-        return [...prevCart, { ...item, quantity: 1 }];
+        return [...currentCart, { ...item, quantity: 1 }];
       }
     });
   };
 
   const removeFromCart = (itemId: string) => {
-    console.log('Cart: Removing item from cart:', itemId);
-    setCart(prevCart => {
-      const existingItem = prevCart.find(cartItem => cartItem.id === itemId);
+    setCart(currentCart => {
+      const existingItem = currentCart.find(cartItem => cartItem.id === itemId);
+      
       if (existingItem && existingItem.quantity > 1) {
-        return prevCart.map(cartItem =>
+        return currentCart.map(cartItem =>
           cartItem.id === itemId
             ? { ...cartItem, quantity: cartItem.quantity - 1 }
             : cartItem
         );
       } else {
-        return prevCart.filter(cartItem => cartItem.id !== itemId);
+        return currentCart.filter(cartItem => cartItem.id !== itemId);
       }
     });
   };
 
   const clearCart = () => {
-    console.log('Cart: Clearing cart');
     setCart([]);
   };
 
@@ -71,7 +79,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     return cart.reduce((total, item) => total + item.quantity, 0);
   };
 
-  const value = {
+  const value: CartContextType = {
     cart,
     addToCart,
     removeFromCart,
@@ -86,12 +94,4 @@ export function CartProvider({ children }: { children: ReactNode }) {
       {children}
     </CartContext.Provider>
   );
-}
-
-export function useCart() {
-  const context = useContext(CartContext);
-  if (context === undefined) {
-    throw new Error('useCart must be used within a CartProvider');
-  }
-  return context;
 }
