@@ -1,4 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
+
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -39,6 +40,36 @@ const SimpleBottomSheet: React.FC<SimpleBottomSheetProps> = ({
   const lastGestureY = useRef(0);
   const startPositionY = useRef(0);
 
+  const snapToPoint = useCallback((point: number) => {
+    setCurrentSnapPoint(point);
+    gestureTranslateY.setValue(0);
+    Animated.timing(translateY, {
+      toValue: SCREEN_HEIGHT - point,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+  }, [translateY, gestureTranslateY]);
+
+  // Determines the closest snap point based on velocity and position
+  const getClosestSnapPoint = useCallback((currentY: number, velocityY: number) => {
+    const currentPosition = SCREEN_HEIGHT - currentY;
+
+    if (velocityY > 1000) return SNAP_POINTS.CLOSED;
+    if (velocityY < -1000) return SNAP_POINTS.FULL;
+
+    const distances = [
+      { point: SNAP_POINTS.HALF, distance: Math.abs(currentPosition - SNAP_POINTS.HALF) },
+      { point: SNAP_POINTS.FULL, distance: Math.abs(currentPosition - SNAP_POINTS.FULL) },
+    ];
+
+    if (currentPosition < SNAP_POINTS.HALF * 0.5) {
+      return SNAP_POINTS.CLOSED;
+    }
+
+    distances.sort((a, b) => a.distance - b.distance);
+    return distances[0].point;
+  }, []);
+
   useEffect(() => {
     if (isVisible) {
       setCurrentSnapPoint(SNAP_POINTS.HALF);
@@ -71,40 +102,10 @@ const SimpleBottomSheet: React.FC<SimpleBottomSheetProps> = ({
         }),
       ]).start();
     }
-  }, [isVisible, translateY, backdropOpacity]);
+  }, [isVisible, translateY, backdropOpacity, gestureTranslateY]);
 
   const handleBackdropPress = () => {
     onClose?.();
-  };
-
-  const snapToPoint = (point: number) => {
-    setCurrentSnapPoint(point);
-    gestureTranslateY.setValue(0);
-    Animated.timing(translateY, {
-      toValue: SCREEN_HEIGHT - point,
-      duration: 300,
-      useNativeDriver: true,
-    }).start();
-  };
-
-  // Determines the closest snap point based on velocity and position
-  const getClosestSnapPoint = (currentY: number, velocityY: number) => {
-    const currentPosition = SCREEN_HEIGHT - currentY;
-
-    if (velocityY > 1000) return SNAP_POINTS.CLOSED;
-    if (velocityY < -1000) return SNAP_POINTS.FULL;
-
-    const distances = [
-      { point: SNAP_POINTS.HALF, distance: Math.abs(currentPosition - SNAP_POINTS.HALF) },
-      { point: SNAP_POINTS.FULL, distance: Math.abs(currentPosition - SNAP_POINTS.FULL) },
-    ];
-
-    if (currentPosition < SNAP_POINTS.HALF * 0.5) {
-      return SNAP_POINTS.CLOSED;
-    }
-
-    distances.sort((a, b) => a.distance - b.distance);
-    return distances[0].point;
   };
 
   // Handles pan gesture events with boundary clamping

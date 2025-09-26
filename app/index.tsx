@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import {
   Text,
@@ -69,20 +70,6 @@ export default function HomeScreen() {
   const [loadingRestaurants, setLoadingRestaurants] = useState(false);
   const [showSupabaseNotice, setShowSupabaseNotice] = useState(true);
 
-  // Redirect to signin if not authenticated
-  if (!loading && !user) {
-    return <Redirect href="/signin" />;
-  }
-
-  // Show loading screen while checking auth
-  if (loading) {
-    return <LoadingScreen message="Checking authentication..." />;
-  }
-
-  useEffect(() => {
-    loadRestaurants();
-  }, []);
-
   const loadRestaurants = async () => {
     setLoadingRestaurants(true);
     console.log('Home: Loading restaurants');
@@ -109,6 +96,21 @@ export default function HomeScreen() {
 
     setLoadingRestaurants(false);
   };
+
+  // Move useEffect before any conditional returns
+  useEffect(() => {
+    loadRestaurants();
+  }, []);
+
+  // Redirect to signin if not authenticated
+  if (!loading && !user) {
+    return <Redirect href="/signin" />;
+  }
+
+  // Show loading screen while checking auth
+  if (loading) {
+    return <LoadingScreen message="Checking authentication..." />;
+  }
 
   const filteredRestaurants = restaurants.filter(restaurant =>
     restaurant.name.toLowerCase().includes(searchQuery.toLowerCase()) ||

@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -40,13 +40,7 @@ export default function ProfileScreen() {
 
   const { user, signOut } = useAuth();
 
-  useEffect(() => {
-    if (user) {
-      loadProfile();
-    }
-  }, [user]);
-
-  const loadProfile = async () => {
+  const loadProfile = useCallback(async () => {
     if (!user) return;
 
     console.log('Profile: Loading profile for user:', user.id);
@@ -78,7 +72,13 @@ export default function ProfileScreen() {
         avatar_url: data.avatar_url || '',
       });
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      loadProfile();
+    }
+  }, [user, loadProfile]);
 
   const updateProfile = async () => {
     if (!user) return;

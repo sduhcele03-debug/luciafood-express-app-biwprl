@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Text,
   View,
@@ -160,13 +160,7 @@ export default function RestaurantScreen() {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (id) {
-      loadRestaurantData();
-    }
-  }, [id]);
-
-  const loadRestaurantData = async () => {
+  const loadRestaurantData = useCallback(async () => {
     if (!id) return;
 
     setLoading(true);
@@ -196,9 +190,13 @@ export default function RestaurantScreen() {
     }
 
     setLoading(false);
-  };
+  }, [id]);
 
-
+  useEffect(() => {
+    if (id) {
+      loadRestaurantData();
+    }
+  }, [id, loadRestaurantData]);
 
   const handleCheckout = () => {
     if (!restaurant) return;
