@@ -4,6 +4,8 @@ import { Platform } from 'react-native';
 import { useEffect, useState } from 'react';
 import { setupErrorLogging } from '../utils/errorLogger';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { AuthProvider } from '../contexts/AuthContext';
+import { CartProvider } from '../contexts/CartContext';
 
 const STORAGE_KEY = 'emulated_device';
 
@@ -46,14 +48,18 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
-        <GestureHandlerRootView style={{ flex: 1 }}>
-          <Stack
-            screenOptions={{
-              headerShown: false,
-              animation: 'default',
-            }}
-          />
-        </GestureHandlerRootView>
+      <AuthProvider>
+        <CartProvider>
+          <GestureHandlerRootView style={{ flex: 1 }}>
+            <Stack
+              screenOptions={{
+                headerShown: false,
+                animation: 'default',
+              }}
+            />
+          </GestureHandlerRootView>
+        </CartProvider>
+      </AuthProvider>
     </SafeAreaProvider>
   );
 }
