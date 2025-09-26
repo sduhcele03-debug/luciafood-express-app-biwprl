@@ -78,7 +78,7 @@ export default function SimpleBottomSheet({ children, isVisible = false, onClose
     } else {
       animateToPosition(SNAP_POINTS[1]);
     }
-  }, [isVisible, animateToPosition]);
+  }, [isVisible, animateToPosition, gestureTranslateY]);
 
   const handleBackdropPress = () => {
     if (onClose) {

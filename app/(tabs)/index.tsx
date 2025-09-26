@@ -12,39 +12,85 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Link, router } from 'expo-router';
 import { useAuth } from '../../contexts/AuthContext';
-import { supabase, Restaurant } from '../../lib/supabase';
+import { supabase, Restaurant, MenuItem } from '../../lib/supabase';
 import { commonStyles, colors, buttonStyles } from '../../styles/commonStyles';
 import Icon from '../../components/Icon';
 import LoadingScreen from '../../components/LoadingScreen';
 
+interface MenuItemWithRestaurant extends MenuItem {
+  restaurant: {
+    name: string;
+  };
+}
+
 export default function HomeScreen() {
   const { user, loading } = useAuth();
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
+  const [featuredMenuItems, setFeaturedMenuItems] = useState<MenuItemWithRestaurant[]>([]);
   const [loadingRestaurants, setLoadingRestaurants] = useState(true);
+  const [loadingMenuItems, setLoadingMenuItems] = useState(true);
 
   useEffect(() => {
     loadFeaturedRestaurants();
+    loadFeaturedMenuItems();
   }, []);
 
   const loadFeaturedRestaurants = async () => {
     try {
       setLoadingRestaurants(true);
-      const { data, error } = await supabase
+      console.log('Loading featured restaurants...');
+      
+      // Get random restaurants using a simple approach
+      const { data: allRestaurants, error } = await supabase
         .from('restaurants')
-        .select('*')
-        .eq('is_featured', true)
-        .limit(6);
+        .select('*');
 
       if (error) {
-        console.error('Error loading featured restaurants:', error);
+        console.error('Error loading restaurants:', error);
         return;
       }
 
-      setRestaurants(data || []);
+      // Shuffle and take first 6 restaurants
+      const shuffled = allRestaurants?.sort(() => 0.5 - Math.random()) || [];
+      const featured = shuffled.slice(0, 6);
+      
+      console.log(`Loaded ${featured.length} featured restaurants`);
+      setRestaurants(featured);
     } catch (error) {
       console.error('Error loading featured restaurants:', error);
     } finally {
       setLoadingRestaurants(false);
+    }
+  };
+
+  const loadFeaturedMenuItems = async () => {
+    try {
+      setLoadingMenuItems(true);
+      console.log('Loading featured menu items...');
+      
+      // Get random menu items with restaurant names
+      const { data: allMenuItems, error } = await supabase
+        .from('menu_items')
+        .select(`
+          *,
+          restaurant:restaurants(name)
+        `);
+
+      if (error) {
+        console.error('Error loading menu items:', error);
+        return;
+      }
+
+      // Shuffle and take first 6 menu items
+      const shuffled = allMenuItems?.sort(() => 0.5 - Math.random()) || [];
+      const featured = shuffled.slice(0, 6);
+      
+      console.log(`Loaded ${featured.length} featured menu items`);
+      setFeaturedMenuItems(featured);
+    } catch (error) {
+      console.error('Error loading featured menu items:', error);
+    } finally {
+      setLoadingMenuItems(false);
     }
   };
 
@@ -91,12 +137,89 @@ export default function HomeScreen() {
       <View style={{ flexDirection: 'row', marginBottom: 8 }}>
         {renderStars(restaurant.rating || 4.5)}
       </View>
+      
+      {/* Restaurant Details */}
+      <View style={{ marginBottom: 8 }}>
+        <Text style={{
+          fontSize: 12,
+          color: colors.textLight,
+          marginBottom: 2,
+        }}>
+          Min Order: R{restaurant.min_order}
+        </Text>
+        <Text style={{
+          fontSize: 12,
+          color: colors.textLight,
+          marginBottom: 2,
+        }}>
+          Delivery: Starts at R{restaurant.delivery_from}
+        </Text>
+        <Text style={{
+          fontSize: 12,
+          color: colors.textLight,
+        }}>
+          Time: {restaurant.delivery_time || restaurant.eta || '30-45 min'}
+        </Text>
+      </View>
+      
       <TouchableOpacity
         style={[buttonStyles.primary, { paddingVertical: 8, marginTop: 8 }]}
         onPress={() => router.push(`/restaurant/${restaurant.id}`)}
       >
         <Text style={{ color: colors.white, fontWeight: '600', fontSize: 14 }}>
           Order Now
+        </Text>
+      </TouchableOpacity>
+    </TouchableOpacity>
+  );
+
+  const renderFeaturedMenuItem = (item: MenuItemWithRestaurant) => (
+    <TouchableOpacity
+      key={item.id}
+      style={[commonStyles.card, { width: '48%', marginHorizontal: '1%', marginBottom: 16 }]}
+      onPress={() => router.push(`/restaurant/${item.restaurant_id}`)}
+    >
+      <Image
+        source={{ 
+          uri: item.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300&h=200&fit=crop'
+        }}
+        style={{
+          width: '100%',
+          height: 100,
+          borderRadius: 12,
+          marginBottom: 8,
+        }}
+        resizeMode="cover"
+      />
+      <Text style={{
+        fontSize: 14,
+        fontWeight: '700',
+        color: colors.text,
+        marginBottom: 4,
+      }}>
+        {item.name}
+      </Text>
+      <Text style={{
+        fontSize: 16,
+        fontWeight: '700',
+        color: colors.primary,
+        marginBottom: 4,
+      }}>
+        R{item.price.toFixed(2)}
+      </Text>
+      <Text style={{
+        fontSize: 12,
+        color: colors.textLight,
+        marginBottom: 8,
+      }}>
+        from {item.restaurant?.name}
+      </Text>
+      <TouchableOpacity
+        style={[buttonStyles.primary, { paddingVertical: 6, paddingHorizontal: 12 }]}
+        onPress={() => router.push(`/restaurant/${item.restaurant_id}`)}
+      >
+        <Text style={{ color: colors.white, fontWeight: '600', fontSize: 12 }}>
+          View Menu
         </Text>
       </TouchableOpacity>
     </TouchableOpacity>
@@ -221,6 +344,32 @@ export default function HomeScreen() {
               justifyContent: 'space-between',
             }}>
               {restaurants.map(renderRestaurant)}
+            </View>
+          )}
+        </View>
+
+        {/* Featured Menu Items */}
+        <View style={{ padding: 20 }}>
+          <Text style={[commonStyles.title, { marginBottom: 20, fontSize: 24 }]}>
+            Featured Dishes
+          </Text>
+          <Text style={{
+            fontSize: 16,
+            color: colors.textLight,
+            marginBottom: 20,
+            textAlign: 'center',
+          }}>
+            Discover delicious dishes from our partner restaurants
+          </Text>
+          {loadingMenuItems ? (
+            <ActivityIndicator size="large" color={colors.primary} />
+          ) : (
+            <View style={{
+              flexDirection: 'row',
+              flexWrap: 'wrap',
+              justifyContent: 'space-between',
+            }}>
+              {featuredMenuItems.map(renderFeaturedMenuItem)}
             </View>
           )}
         </View>

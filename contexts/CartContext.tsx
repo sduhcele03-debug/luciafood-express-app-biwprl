@@ -4,7 +4,6 @@ import { MenuItem } from '../lib/supabase';
 
 interface CartItem extends MenuItem {
   quantity: number;
-  restaurant_id: string;
 }
 
 interface CartContextType {
@@ -15,6 +14,7 @@ interface CartContextType {
   getItemQuantity: (itemId: string) => number;
   getCartTotal: () => number;
   getCartItemCount: () => number;
+  getRestaurantCount: () => number;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -79,6 +79,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
     return cart.reduce((total, item) => total + item.quantity, 0);
   };
 
+  const getRestaurantCount = () => {
+    const restaurantIds = new Set(cart.map(item => item.restaurant_id));
+    return restaurantIds.size;
+  };
+
   const value: CartContextType = {
     cart,
     addToCart,
@@ -87,6 +92,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     getItemQuantity,
     getCartTotal,
     getCartItemCount,
+    getRestaurantCount,
   };
 
   return (
