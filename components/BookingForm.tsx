@@ -14,7 +14,7 @@ import {
 import { Linking } from 'expo-linking';
 import { commonStyles, colors, buttonStyles } from '../styles/commonStyles';
 import Icon from './Icon';
-import { generateWhatsAppUrl } from '../constants/whatsapp';
+import { generateWhatsAppUrl, openWhatsAppWithFallback } from '../constants/whatsapp';
 
 interface BookingFormProps {
   isVisible: boolean;
@@ -56,11 +56,11 @@ ${problem}
 
 Please contact me to arrange a service appointment.`;
 
-      const whatsappUrl = generateWhatsAppUrl(whatsappNumber, bookingDetails);
+      console.log(`Attempting to send ${serviceName} booking request via WhatsApp...`);
+      const whatsappOpened = await openWhatsAppWithFallback(whatsappNumber, bookingDetails);
       
-      const supported = await Linking.canOpenURL(whatsappUrl);
-      if (supported) {
-        await Linking.openURL(whatsappUrl);
+      if (whatsappOpened) {
+        console.log('WhatsApp opened successfully for booking request');
         
         // Clear form and close modal
         setProblem('');
@@ -74,7 +74,9 @@ Please contact me to arrange a service appointment.`;
           `Your ${serviceName.toLowerCase()} booking request has been sent via WhatsApp. You will receive a response shortly.`
         );
       } else {
-        Alert.alert('Error', 'WhatsApp is not installed on this device');
+        console.log('WhatsApp could not be opened for booking request, but fallback was handled');
+        // Don't clear form if WhatsApp couldn't be opened
+        // The fallback function already handles user communication
       }
     } catch (error) {
       console.error('Error sending booking request:', error);

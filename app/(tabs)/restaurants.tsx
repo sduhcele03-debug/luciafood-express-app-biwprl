@@ -15,6 +15,14 @@ import { supabase, Restaurant } from '../../lib/supabase';
 import { commonStyles, colors } from '../../styles/commonStyles';
 import Icon from '../../components/Icon';
 
+// Import restaurant logos
+const restaurantLogos = {
+  'KFC': require('../../assets/images/ea004ca1-a296-4e39-984b-2089e42444f5.jpeg'),
+  'Galito\'s Chicken': require('../../assets/images/f3b869c8-2861-4512-997d-1c12896caf88.jpeg'),
+  'Nando\'s': require('../../assets/images/23f5887f-3eee-46c9-a4fe-38bc1310eb7a.jpeg'),
+  'Spur': require('../../assets/images/a49cf35b-b89b-413e-8d90-f264b2fd9558.jpeg'),
+};
+
 export default function RestaurantsScreen() {
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [loading, setLoading] = useState(true);
@@ -73,9 +81,10 @@ export default function RestaurantsScreen() {
     >
       <View style={{ flexDirection: 'row' }}>
         <Image
-          source={{ 
-            uri: restaurant.logo_url || restaurant.image || 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=100&h=100&fit=crop'
-          }}
+          source={
+            restaurantLogos[restaurant.name as keyof typeof restaurantLogos] ||
+            { uri: restaurant.logo_url || restaurant.image || 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=100&h=100&fit=crop' }
+          }
           style={{
             width: 80,
             height: 80,

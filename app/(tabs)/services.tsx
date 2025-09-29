@@ -16,7 +16,8 @@ import BookingForm from '../../components/BookingForm';
 import { 
   LOCAL_TRADES_BOOKING_NUMBER, 
   ADVERTISING_NUMBER, 
-  generateWhatsAppUrl 
+  generateWhatsAppUrl,
+  openWhatsAppWithFallback
 } from '../../constants/whatsapp';
 
 interface Service {
@@ -108,15 +109,15 @@ export default function ServicesScreen() {
 
   const handleAdvertisingPress = async () => {
     try {
-      console.log('Opening advertising WhatsApp link');
+      console.log('Attempting to send advertising inquiry via WhatsApp...');
       const advertisingMessage = 'I am interested in advertising my local business on LuciaFood Express.';
-      const whatsappUrl = generateWhatsAppUrl(ADVERTISING_NUMBER, advertisingMessage);
       
-      const supported = await Linking.canOpenURL(whatsappUrl);
-      if (supported) {
-        await Linking.openURL(whatsappUrl);
+      const whatsappOpened = await openWhatsAppWithFallback(ADVERTISING_NUMBER, advertisingMessage);
+      
+      if (whatsappOpened) {
+        console.log('WhatsApp opened successfully for advertising inquiry');
       } else {
-        Alert.alert('Error', 'WhatsApp is not installed on this device');
+        console.log('WhatsApp could not be opened for advertising inquiry, but fallback was handled');
       }
     } catch (error) {
       console.error('Error opening advertising WhatsApp link:', error);

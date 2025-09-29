@@ -17,7 +17,7 @@ import { useCart } from '../contexts/CartContext';
 import { supabase } from '../lib/supabase';
 import { commonStyles, colors, buttonStyles } from '../styles/commonStyles';
 import Icon from '../components/Icon';
-import { FOOD_ORDER_CHECKOUT_NUMBER, generateWhatsAppUrl } from '../constants/whatsapp';
+import { FOOD_ORDER_CHECKOUT_NUMBER, generateWhatsAppUrl, openWhatsAppWithFallback } from '../constants/whatsapp';
 
 const deliveryFees = {
   'Nordale': 30,
@@ -214,12 +214,12 @@ Payment Method: ${paymentMethod}`;
         console.log(`Successfully saved ${orderResults.length} orders`);
       }
 
-      // Open WhatsApp with correct food order checkout number
-      const whatsappUrl = generateWhatsAppUrl(FOOD_ORDER_CHECKOUT_NUMBER, orderDetails);
+      // Open WhatsApp with enhanced fallback handling
+      console.log('Attempting to send order via WhatsApp...');
+      const whatsappOpened = await openWhatsAppWithFallback(FOOD_ORDER_CHECKOUT_NUMBER, orderDetails);
       
-      const supported = await Linking.canOpenURL(whatsappUrl);
-      if (supported) {
-        await Linking.openURL(whatsappUrl);
+      if (whatsappOpened) {
+        console.log('WhatsApp opened successfully, clearing cart...');
         clearCart();
         Alert.alert(
           'Order Sent!',
@@ -229,7 +229,9 @@ Payment Method: ${paymentMethod}`;
           [{ text: 'OK', onPress: () => router.push('/(tabs)/') }]
         );
       } else {
-        Alert.alert('Error', 'WhatsApp is not installed on this device');
+        console.log('WhatsApp could not be opened, but fallback was handled');
+        // Don't clear cart if WhatsApp couldn't be opened
+        // The fallback function already handles user communication
       }
     } catch (error) {
       console.error('Error during checkout:', error);
