@@ -173,57 +173,63 @@ export default function HomeScreen() {
     </TouchableOpacity>
   );
 
-  const renderFeaturedMenuItem = (item: MenuItemWithRestaurant) => (
-    <TouchableOpacity
-      key={item.id}
-      style={[commonStyles.card, { width: '48%', marginHorizontal: '1%', marginBottom: 16 }]}
-      onPress={() => router.push(`/restaurant/${item.restaurant_id}`)}
-    >
-      <Image
-        source={{ 
-          uri: item.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300&h=200&fit=crop'
-        }}
-        style={{
-          width: '100%',
-          height: 100,
-          borderRadius: 12,
-          marginBottom: 8,
-        }}
-        resizeMode="cover"
-      />
-      <Text style={{
-        fontSize: 14,
-        fontWeight: '700',
-        color: colors.text,
-        marginBottom: 4,
-      }}>
-        {item.name}
-      </Text>
-      <Text style={{
-        fontSize: 16,
-        fontWeight: '700',
-        color: colors.primary,
-        marginBottom: 4,
-      }}>
-        R{item.price.toFixed(2)}
-      </Text>
-      <Text style={{
-        fontSize: 12,
-        color: colors.textLight,
-        marginBottom: 8,
-      }}>
-        from {item.restaurant?.name}
-      </Text>
+  const renderFeaturedMenuItem = (item: MenuItemWithRestaurant) => {
+    const shouldShowImage = item.restaurant?.name !== 'Spur';
+    
+    return (
       <TouchableOpacity
-        style={[buttonStyles.primary, { paddingVertical: 6, paddingHorizontal: 12 }]}
+        key={item.id}
+        style={[commonStyles.card, { width: '48%', marginHorizontal: '1%', marginBottom: 16 }]}
         onPress={() => router.push(`/restaurant/${item.restaurant_id}`)}
       >
-        <Text style={{ color: colors.white, fontWeight: '600', fontSize: 12 }}>
-          View Menu
+        {shouldShowImage && (
+          <Image
+            source={{ 
+              uri: item.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300&h=200&fit=crop'
+            }}
+            style={{
+              width: '100%',
+              height: 100,
+              borderRadius: 12,
+              marginBottom: 8,
+            }}
+            resizeMode="cover"
+          />
+        )}
+        <Text style={{
+          fontSize: 14,
+          fontWeight: '700',
+          color: colors.text,
+          marginBottom: 4,
+        }}>
+          {item.name}
         </Text>
+        <Text style={{
+          fontSize: 16,
+          fontWeight: '700',
+          color: colors.primary,
+          marginBottom: 4,
+        }}>
+          R{item.price.toFixed(2)}
+        </Text>
+        <Text style={{
+          fontSize: 12,
+          color: colors.textLight,
+          marginBottom: 8,
+        }}>
+          from {item.restaurant?.name}
+        </Text>
+        <TouchableOpacity
+          style={[buttonStyles.primary, { paddingVertical: 6, paddingHorizontal: 12 }]}
+          onPress={() => router.push(`/restaurant/${item.restaurant_id}`)}
+        >
+          <Text style={{ color: colors.white, fontWeight: '600', fontSize: 12 }}>
+            View Menu
+          </Text>
+        </TouchableOpacity>
       </TouchableOpacity>
-    </TouchableOpacity>
-  );
+    );
+  };
 
   useEffect(() => {
     loadFeaturedRestaurants();

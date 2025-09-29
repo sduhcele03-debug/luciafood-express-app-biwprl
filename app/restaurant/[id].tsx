@@ -102,22 +102,25 @@ export default function RestaurantScreen() {
 
   const renderMenuItem = (item: MenuItem) => {
     const quantity = getItemQuantity(item.id);
+    const shouldShowImage = restaurant?.name !== 'Spur';
     
     return (
       <View key={item.id} style={[commonStyles.card, { marginBottom: 16 }]}>
         <View style={{ flexDirection: 'row' }}>
-          <Image
-            source={{ 
-              uri: item.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=150&h=150&fit=crop'
-            }}
-            style={{
-              width: 80,
-              height: 80,
-              borderRadius: 12,
-              marginRight: 16,
-            }}
-            resizeMode="cover"
-          />
+          {shouldShowImage && (
+            <Image
+              source={{ 
+                uri: item.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=150&h=150&fit=crop'
+              }}
+              style={{
+                width: 80,
+                height: 80,
+                borderRadius: 12,
+                marginRight: 16,
+              }}
+              resizeMode="cover"
+            />
+          )}
           <View style={{ flex: 1 }}>
             <Text style={{
               fontSize: 16,
@@ -127,6 +130,31 @@ export default function RestaurantScreen() {
             }}>
               {item.name}
             </Text>
+            {item.tags && item.tags.length > 0 && (
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 8 }}>
+                {item.tags.map((tag, index) => (
+                  <View
+                    key={index}
+                    style={{
+                      backgroundColor: colors.backgroundAlt,
+                      paddingHorizontal: 8,
+                      paddingVertical: 2,
+                      borderRadius: 12,
+                      marginRight: 6,
+                      marginBottom: 4,
+                    }}
+                  >
+                    <Text style={{
+                      fontSize: 10,
+                      color: colors.textLight,
+                      fontWeight: '500',
+                    }}>
+                      {tag}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            )}
             <Text style={{
               fontSize: 18,
               fontWeight: '700',
