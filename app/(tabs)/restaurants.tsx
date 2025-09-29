@@ -21,6 +21,7 @@ const restaurantLogos = {
   'Galito\'s Chicken': require('../../assets/images/f3b869c8-2861-4512-997d-1c12896caf88.jpeg'),
   'Nando\'s': require('../../assets/images/23f5887f-3eee-46c9-a4fe-38bc1310eb7a.jpeg'),
   'Spur': require('../../assets/images/a49cf35b-b89b-413e-8d90-f264b2fd9558.jpeg'),
+  'Hungry Lion': require('../../assets/images/8af68d59-ba87-4566-9b1c-897d59d34f63.jpeg'),
 };
 
 export default function RestaurantsScreen() {
@@ -29,36 +30,9 @@ export default function RestaurantsScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredRestaurants, setFilteredRestaurants] = useState<Restaurant[]>([]);
 
-  useEffect(() => {
-    loadRestaurants();
-  }, []);
-
-  useEffect(() => {
-    filterRestaurants();
-  }, [filterRestaurants]);
-
-  const loadRestaurants = async () => {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('restaurants')
-        .select('*')
-        .order('name');
-
-      if (error) {
-        console.error('Error loading restaurants:', error);
-        return;
-      }
-
-      setRestaurants(data || []);
-    } catch (error) {
-      console.error('Error loading restaurants:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // Define filterRestaurants function BEFORE useEffect
   const filterRestaurants = useCallback(() => {
+    console.log('Filtering restaurants with query:', searchQuery);
     if (!searchQuery.trim()) {
       setFilteredRestaurants(restaurants);
       return;
@@ -70,8 +44,41 @@ export default function RestaurantsScreen() {
         tag.toLowerCase().includes(searchQuery.toLowerCase())
       )
     );
+    console.log(`Filtered ${filtered.length} restaurants from ${restaurants.length} total`);
     setFilteredRestaurants(filtered);
   }, [searchQuery, restaurants]);
+
+  useEffect(() => {
+    loadRestaurants();
+  }, []);
+
+  // Now filterRestaurants is defined, so this useEffect can safely use it
+  useEffect(() => {
+    filterRestaurants();
+  }, [filterRestaurants]);
+
+  const loadRestaurants = async () => {
+    try {
+      setLoading(true);
+      console.log('Loading restaurants...');
+      const { data, error } = await supabase
+        .from('restaurants')
+        .select('*')
+        .order('name');
+
+      if (error) {
+        console.error('Error loading restaurants:', error);
+        return;
+      }
+
+      console.log(`Loaded ${data?.length || 0} restaurants`);
+      setRestaurants(data || []);
+    } catch (error) {
+      console.error('Error loading restaurants:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const renderRestaurant = (restaurant: Restaurant) => (
     <TouchableOpacity

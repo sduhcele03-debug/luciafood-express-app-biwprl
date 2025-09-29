@@ -17,12 +17,13 @@ import { commonStyles, colors, buttonStyles } from '../../styles/commonStyles';
 import Icon from '../../components/Icon';
 import LoadingScreen from '../../components/LoadingScreen';
 
-// Import restaurant logos
+// Import restaurant logos including new ones
 const restaurantLogos = {
   'KFC': require('../../assets/images/ea004ca1-a296-4e39-984b-2089e42444f5.jpeg'),
   'Galito\'s Chicken': require('../../assets/images/f3b869c8-2861-4512-997d-1c12896caf88.jpeg'),
   'Nando\'s': require('../../assets/images/23f5887f-3eee-46c9-a4fe-38bc1310eb7a.jpeg'),
   'Spur': require('../../assets/images/a49cf35b-b89b-413e-8d90-f264b2fd9558.jpeg'),
+  'Hungry Lion': require('../../assets/images/8af68d59-ba87-4566-9b1c-897d59d34f63.jpeg'),
 };
 
 interface MenuItemWithRestaurant extends MenuItem {
@@ -33,7 +34,7 @@ interface MenuItemWithRestaurant extends MenuItem {
 
 export default function HomeScreen() {
   const { user, loading } = useAuth();
-  const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
+  const [featuredRestaurants, setFeaturedRestaurants] = useState<Restaurant[]>([]);
   const [featuredMenuItems, setFeaturedMenuItems] = useState<MenuItemWithRestaurant[]>([]);
   const [loadingRestaurants, setLoadingRestaurants] = useState(true);
   const [loadingMenuItems, setLoadingMenuItems] = useState(true);
@@ -48,7 +49,7 @@ export default function HomeScreen() {
       setLoadingRestaurants(true);
       console.log('Loading featured restaurants...');
       
-      // Get random restaurants using a simple approach
+      // Get all restaurants
       const { data: allRestaurants, error } = await supabase
         .from('restaurants')
         .select('*');
@@ -58,12 +59,12 @@ export default function HomeScreen() {
         return;
       }
 
-      // Shuffle and take first 6 restaurants
+      // Shuffle and take only 4 restaurants for featured section
       const shuffled = allRestaurants?.sort(() => 0.5 - Math.random()) || [];
-      const featured = shuffled.slice(0, 6);
+      const featured = shuffled.slice(0, 4);
       
-      console.log(`Loaded ${featured.length} featured restaurants`);
-      setRestaurants(featured);
+      console.log(`Loaded ${featured.length} featured restaurants (limited to 4)`);
+      setFeaturedRestaurants(featured);
     } catch (error) {
       console.error('Error loading featured restaurants:', error);
     } finally {
@@ -240,11 +241,6 @@ export default function HomeScreen() {
     );
   };
 
-  useEffect(() => {
-    loadFeaturedRestaurants();
-    loadFeaturedMenuItems();
-  }, []);
-
   if (loading) {
     return <LoadingScreen />;
   }
@@ -252,16 +248,29 @@ export default function HomeScreen() {
   return (
     <SafeAreaView style={[commonStyles.container, { paddingBottom: 80 }]}>
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Hero Banner */}
+        {/* Hero Banner with LuciaFood Express Branding */}
         <LinearGradient
           colors={[colors.primary, colors.secondary]}
           style={{
             padding: 32,
             alignItems: 'center',
             justifyContent: 'center',
-            minHeight: 250,
+            minHeight: 280,
           }}
         >
+          {/* LuciaFood Express Logo */}
+          <Image
+            source={require('../../assets/images/a7a8e731-a1de-42bf-9906-e66602c740a1.jpeg')}
+            style={{
+              width: 120,
+              height: 120,
+              borderRadius: 60,
+              marginBottom: 20,
+              backgroundColor: colors.white,
+              padding: 10,
+            }}
+            resizeMode="contain"
+          />
           <Text style={{
             fontSize: 32,
             fontWeight: '800',
@@ -269,7 +278,7 @@ export default function HomeScreen() {
             textAlign: 'center',
             marginBottom: 16,
           }}>
-            Fastest delivery in town
+            LuciaFood Express
           </Text>
           <Text style={{
             fontSize: 18,
@@ -278,7 +287,7 @@ export default function HomeScreen() {
             marginBottom: 24,
             opacity: 0.9,
           }}>
-            Get your favorite food delivered in 30 minutes or less
+            Fast, Precise, and Secure Delivery Service
           </Text>
           <TouchableOpacity
             style={[buttonStyles.secondary, { 
@@ -350,10 +359,18 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* Featured Restaurants */}
+        {/* Featured Restaurants - LIMITED TO 4 */}
         <View style={{ padding: 20 }}>
           <Text style={[commonStyles.title, { marginBottom: 20, fontSize: 24 }]}>
             Featured Restaurants
+          </Text>
+          <Text style={{
+            fontSize: 16,
+            color: colors.textLight,
+            marginBottom: 20,
+            textAlign: 'center',
+          }}>
+            Discover 4 randomly selected restaurants just for you
           </Text>
           {loadingRestaurants ? (
             <ActivityIndicator size="large" color={colors.primary} />
@@ -363,7 +380,7 @@ export default function HomeScreen() {
               flexWrap: 'wrap',
               justifyContent: 'space-between',
             }}>
-              {restaurants.map(renderRestaurant)}
+              {featuredRestaurants.map(renderRestaurant)}
             </View>
           )}
         </View>
