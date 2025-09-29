@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Text,
   View,
@@ -49,9 +49,9 @@ export default function CartScreen() {
   useEffect(() => {
     loadUserProfile();
     groupCartByRestaurant();
-  }, [user, cart]);
+  }, [loadUserProfile, groupCartByRestaurant]);
 
-  const loadUserProfile = async () => {
+  const loadUserProfile = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -76,9 +76,9 @@ export default function CartScreen() {
     } catch (error) {
       console.error('Error loading profile:', error);
     }
-  };
+  }, [user]);
 
-  const groupCartByRestaurant = async () => {
+  const groupCartByRestaurant = useCallback(async () => {
     if (cart.length === 0) return;
 
     try {
@@ -113,7 +113,7 @@ export default function CartScreen() {
     } catch (error) {
       console.error('Error grouping cart by restaurant:', error);
     }
-  };
+  }, [cart]);
 
   const subtotal = getCartTotal();
   const restaurantCount = Object.keys(restaurantsByOrder).length;

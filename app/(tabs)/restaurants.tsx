@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Text,
   View,
@@ -27,7 +27,7 @@ export default function RestaurantsScreen() {
 
   useEffect(() => {
     filterRestaurants();
-  }, [searchQuery, restaurants]);
+  }, [filterRestaurants]);
 
   const loadRestaurants = async () => {
     try {
@@ -50,7 +50,7 @@ export default function RestaurantsScreen() {
     }
   };
 
-  const filterRestaurants = () => {
+  const filterRestaurants = useCallback(() => {
     if (!searchQuery.trim()) {
       setFilteredRestaurants(restaurants);
       return;
@@ -63,7 +63,7 @@ export default function RestaurantsScreen() {
       )
     );
     setFilteredRestaurants(filtered);
-  };
+  }, [searchQuery, restaurants]);
 
   const renderRestaurant = (restaurant: Restaurant) => (
     <TouchableOpacity
