@@ -225,6 +225,11 @@ export default function HomeScreen() {
     </TouchableOpacity>
   );
 
+  useEffect(() => {
+    loadFeaturedRestaurants();
+    loadFeaturedMenuItems();
+  }, []);
+
   if (loading) {
     return <LoadingScreen />;
   }

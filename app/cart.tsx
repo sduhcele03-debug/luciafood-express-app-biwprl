@@ -17,6 +17,7 @@ import { useCart } from '../contexts/CartContext';
 import { supabase } from '../lib/supabase';
 import { commonStyles, colors, buttonStyles } from '../styles/commonStyles';
 import Icon from '../components/Icon';
+import { FOOD_ORDER_CHECKOUT_NUMBER, generateWhatsAppUrl } from '../constants/whatsapp';
 
 const deliveryFees = {
   'Nordale': 30,
@@ -213,9 +214,8 @@ Payment Method: ${paymentMethod}`;
         console.log(`Successfully saved ${orderResults.length} orders`);
       }
 
-      // Open WhatsApp
-      const encodedMessage = encodeURIComponent(orderDetails);
-      const whatsappUrl = `https://wa.me/27822116064?text=${encodedMessage}`;
+      // Open WhatsApp with correct food order checkout number
+      const whatsappUrl = generateWhatsAppUrl(FOOD_ORDER_CHECKOUT_NUMBER, orderDetails);
       
       const supported = await Linking.canOpenURL(whatsappUrl);
       if (supported) {
