@@ -12,7 +12,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Link, router } from 'expo-router';
 import { useAuth } from '../../contexts/AuthContext';
-import { supabase, Restaurant, MenuItem, addSteersMenuItems } from '../../lib/supabase';
+import { supabase, Restaurant, MenuItem, addSteersMenuItems, initializeDatabase } from '../../lib/supabase';
 import { commonStyles, colors, buttonStyles } from '../../styles/commonStyles';
 import Icon from '../../components/Icon';
 import LoadingScreen from '../../components/LoadingScreen';
@@ -40,11 +40,15 @@ export default function HomeScreen() {
   const [featuredMenuItems, setFeaturedMenuItems] = useState<MenuItemWithRestaurant[]>([]);
   const [loadingRestaurants, setLoadingRestaurants] = useState(true);
   const [loadingMenuItems, setLoadingMenuItems] = useState(true);
+  const [adminActionLoading, setAdminActionLoading] = useState(false);
 
   useEffect(() => {
     // CRITICAL FIX: Add proper error handling for initial data loading
     const initializeData = async () => {
       try {
+        // Initialize database first
+        await initializeDatabase();
+        
         await Promise.all([
           loadFeaturedRestaurants(),
           loadFeaturedMenuItems()
@@ -62,7 +66,7 @@ export default function HomeScreen() {
   const loadFeaturedRestaurants = async () => {
     try {
       setLoadingRestaurants(true);
-      console.log('Loading featured restaurants...');
+      console.log('📊 Loading featured restaurants...');
       
       // Get all restaurants with proper error handling
       const { data: allRestaurants, error } = await supabase
@@ -70,7 +74,7 @@ export default function HomeScreen() {
         .select('*');
 
       if (error) {
-        console.error('Error loading restaurants:', error);
+        console.error('❌ Error loading restaurants:', error);
         return;
       }
 
@@ -78,10 +82,10 @@ export default function HomeScreen() {
       const shuffled = allRestaurants?.sort(() => 0.5 - Math.random()) || [];
       const featured = shuffled.slice(0, 4);
       
-      console.log(`Loaded ${featured.length} featured restaurants (randomly selected from ${allRestaurants?.length || 0} total)`);
+      console.log(`✅ Loaded ${featured.length} featured restaurants (randomly selected from ${allRestaurants?.length || 0} total)`);
       setFeaturedRestaurants(featured);
     } catch (error) {
-      console.error('Error loading featured restaurants:', error);
+      console.error('❌ Error loading featured restaurants:', error);
     } finally {
       setLoadingRestaurants(false);
     }
@@ -90,7 +94,7 @@ export default function HomeScreen() {
   const loadFeaturedMenuItems = async () => {
     try {
       setLoadingMenuItems(true);
-      console.log('Loading featured menu items...');
+      console.log('📊 Loading featured menu items...');
       
       // Get random menu items with restaurant names with proper error handling
       const { data: allMenuItems, error } = await supabase
@@ -101,7 +105,7 @@ export default function HomeScreen() {
         `);
 
       if (error) {
-        console.error('Error loading menu items:', error);
+        console.error('❌ Error loading menu items:', error);
         return;
       }
 
@@ -109,10 +113,10 @@ export default function HomeScreen() {
       const shuffled = allMenuItems?.sort(() => 0.5 - Math.random()) || [];
       const featured = shuffled.slice(0, 6);
       
-      console.log(`Loaded ${featured.length} featured menu items`);
+      console.log(`✅ Loaded ${featured.length} featured menu items`);
       setFeaturedMenuItems(featured);
     } catch (error) {
-      console.error('Error loading featured menu items:', error);
+      console.error('❌ Error loading featured menu items:', error);
     } finally {
       setLoadingMenuItems(false);
     }
@@ -229,6 +233,7 @@ export default function HomeScreen() {
         }}>
           {item.name}
         </Text>
+        {/* PRICE DISPLAY REFINEMENT: Only show lucia_price */}
         <Text style={{
           fontSize: 16,
           fontWeight: '700',
@@ -256,22 +261,29 @@ export default function HomeScreen() {
     );
   };
 
+  // CRITICAL FIX: Enhanced admin action with comprehensive error handling
   const handleAddSteersMenuItems = async () => {
-    console.log('Adding Steers menu items...');
+    console.log('🚀 Adding Steers menu items...');
+    setAdminActionLoading(true);
+    
     try {
       const result = await addSteersMenuItems();
+      
       if (result.error) {
-        console.error('Failed to add menu items:', result.error);
-        alert('Failed to add menu items. Check console for details.');
+        console.error('❌ Failed to add menu items:', result.error);
+        alert(`Failed to add menu items: ${result.error}`);
       } else {
-        console.log('Successfully added Steers menu items!');
-        alert('Successfully added Steers Premium Beef Burgers, Phanda Value Range, and Flame-Grilled Portions & Ribs!');
+        console.log('✅ Successfully added Steers menu items!');
+        alert(`Successfully added ${result.count || 'all'} Steers menu items including Premium Beef Burgers, Phanda Value Range, and Flame-Grilled Portions & Ribs!`);
+        
         // Refresh the featured menu items to show new items
         await loadFeaturedMenuItems();
       }
     } catch (error) {
-      console.error('Unexpected error adding Steers menu items:', error);
-      alert('An unexpected error occurred. Please try again.');
+      console.error('💥 Unexpected error adding Steers menu items:', error);
+      alert('An unexpected error occurred. Please check the console for details.');
+    } finally {
+      setAdminActionLoading(false);
     }
   };
 
@@ -450,23 +462,51 @@ export default function HomeScreen() {
           )}
         </View>
 
-        {/* Admin Section - Temporary for adding Steers menu items */}
-        <View style={{ padding: 20, alignItems: 'center', backgroundColor: colors.background }}>
+        {/* Admin Section - Enhanced with better UX */}
+        <View style={{ padding: 20, alignItems: 'center', backgroundColor: colors.backgroundAlt }}>
           <Text style={[commonStyles.title, { marginBottom: 16, fontSize: 18, color: colors.textLight }]}>
             Admin Actions
           </Text>
           <TouchableOpacity 
-            style={[buttonStyles.secondary, { marginBottom: 16 }]}
+            style={[
+              buttonStyles.secondary, 
+              { 
+                marginBottom: 16,
+                opacity: adminActionLoading ? 0.6 : 1,
+              }
+            ]}
             onPress={handleAddSteersMenuItems}
+            disabled={adminActionLoading}
           >
-            <Text style={{ 
-              color: colors.primary, 
-              fontWeight: '700',
-              fontSize: 14,
-            }}>
-              Add New Steers Menu Items (Phanda Value Range + Flame-Grilled)
-            </Text>
+            {adminActionLoading ? (
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <ActivityIndicator size="small" color={colors.primary} style={{ marginRight: 8 }} />
+                <Text style={{ 
+                  color: colors.primary, 
+                  fontWeight: '700',
+                  fontSize: 14,
+                }}>
+                  Adding Menu Items...
+                </Text>
+              </View>
+            ) : (
+              <Text style={{ 
+                color: colors.primary, 
+                fontWeight: '700',
+                fontSize: 14,
+              }}>
+                Add New Steers Menu Items (Phanda Value Range + Flame-Grilled)
+              </Text>
+            )}
           </TouchableOpacity>
+          <Text style={{
+            fontSize: 12,
+            color: colors.textLight,
+            textAlign: 'center',
+            marginTop: 8,
+          }}>
+            This will add all Steers menu items including Premium Beef Burgers, Phanda Value Range, and Flame-Grilled Portions & Ribs with proper 7% markup calculation.
+          </Text>
         </View>
 
         {/* Bottom CTA */}

@@ -1,5 +1,5 @@
 
-// Global error logging for runtime errors
+// Enhanced global error logging for runtime errors
 
 import { Platform } from "react-native";
 
@@ -96,7 +96,10 @@ const getCallerInfo = (): string => {
   return '';
 };
 
+// CRITICAL FIX: Enhanced error logging setup
 export const setupErrorLogging = () => {
+  console.log('🔧 Setting up enhanced error logging...');
+
   // Capture unhandled errors in web environment
   if (typeof window !== 'undefined') {
     // Override window.onerror to catch JavaScript errors
@@ -124,7 +127,8 @@ export const setupErrorLogging = () => {
           reason: event.reason,
           promise: event.promise,
           timestamp: new Date().toISOString(),
-          stack: event.reason?.stack || 'No stack trace available'
+          stack: event.reason?.stack || 'No stack trace available',
+          type: 'unhandledrejection'
         };
 
         console.error('🚨 UNHANDLED PROMISE REJECTION:', errorData);
@@ -177,6 +181,21 @@ export const setupErrorLogging = () => {
     sendErrorToParent('warn', 'Console Warning', enhancedMessage);
   };
 
+  // CRITICAL FIX: Add specific handling for common React Native errors
+  const originalFetch = global.fetch;
+  global.fetch = async (...args) => {
+    try {
+      const response = await originalFetch(...args);
+      if (!response.ok) {
+        console.warn(`🌐 HTTP ${response.status}: ${response.statusText} for ${args[0]}`);
+      }
+      return response;
+    } catch (error) {
+      console.error('🌐 Fetch Error:', error, 'URL:', args[0]);
+      throw error;
+    }
+  };
+
   // Try to intercept React Native warnings at a lower level
   if (typeof window !== 'undefined' && (window as any).__DEV__) {
     // Override React's warning system if available
@@ -194,4 +213,22 @@ export const setupErrorLogging = () => {
       }
     }
   }
+
+  console.log('✅ Enhanced error logging setup completed');
 };
+
+// CRITICAL FIX: Export error logger function for manual error reporting
+export const errorLogger = (error: any, context?: string) => {
+  const errorData = {
+    error: error instanceof Error ? error.message : error,
+    stack: error instanceof Error ? error.stack : 'No stack trace',
+    context: context || 'Manual error report',
+    timestamp: new Date().toISOString()
+  };
+
+  console.error('📝 Manual Error Report:', errorData);
+  sendErrorToParent('error', 'Manual Error Report', errorData);
+};
+
+// Initialize error logging immediately
+setupErrorLogging();

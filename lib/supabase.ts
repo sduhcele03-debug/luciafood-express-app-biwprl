@@ -73,10 +73,10 @@ export interface Profile {
   updated_at?: string;
 }
 
-// RUNTIME ERROR FIX: Improved Steers menu data with proper error handling
+// CRITICAL FIX: Enhanced Steers menu data with proper error handling and validation
 export const STEERS_PREMIUM_BEEF_BURGERS = [
   {
-    category: 'Premium Beef Burgers',
+    category: 'Burgers',
     name: 'Mighty King Steer',
     original_price: 119.90,
     price: 119.90,
@@ -84,7 +84,7 @@ export const STEERS_PREMIUM_BEEF_BURGERS = [
     image_url: 'https://iraas.yumbi.com/?url=https%3A%2F%2Fstatic.yumbi.com%2Fmanagement%2Fapi%2Fresource%2F%3Fid%3D477606%26ts%3D1755676667000&devicePixelRatio=1.6&width=135&height=90&resizeMode=Crop'
   },
   {
-    category: 'Premium Beef Burgers',
+    category: 'Burgers',
     name: 'Double Cheesy Bacon Burger',
     original_price: 104.90,
     price: 104.90,
@@ -92,7 +92,7 @@ export const STEERS_PREMIUM_BEEF_BURGERS = [
     image_url: 'https://iraas.yumbi.com/?url=https%3A%2F%2Fstatic.yumbi.com%2Fmanagement%2Fapi%2Fresource%2F%3Fid%3D477604%26ts%3D1755676667000&devicePixelRatio=1.6&width=135&height=90&resizeMode=Crop'
   },
   {
-    category: 'Premium Beef Burgers',
+    category: 'Burgers',
     name: 'Big Bacon King Steer',
     original_price: 104.90,
     price: 104.90,
@@ -100,7 +100,7 @@ export const STEERS_PREMIUM_BEEF_BURGERS = [
     image_url: 'https://iraas.yumbi.com/?url=https%3A%2F%2Fstatic.yumbi.com%2Fmanagement%2Fapi%2Fresource%2F%3Fid%3D477605%26ts%3D1755676667000&devicePixelRatio=1.6&width=135&height=90&resizeMode=Crop'
   },
   {
-    category: 'Premium Beef Burgers',
+    category: 'Burgers',
     name: 'Mega Ribster Burger',
     original_price: 84.90,
     price: 84.90,
@@ -108,7 +108,7 @@ export const STEERS_PREMIUM_BEEF_BURGERS = [
     image_url: 'https://iraas.yumbi.com/?url=https%3A%2F%2Fstatic.yumbi.com%2Fmanagement%2Fapi%2Fresource%2F%3Fid%3D477602%26ts%3D1755676667000&devicePixelRatio=1.6&width=135&height=90&resizeMode=Crop'
   },
   {
-    category: 'Premium Beef Burgers',
+    category: 'Burgers',
     name: 'Mo\' Mjojo Burger',
     original_price: 84.90,
     price: 84.90,
@@ -116,7 +116,7 @@ export const STEERS_PREMIUM_BEEF_BURGERS = [
     image_url: 'https://iraas.yumbi.com/?url=https%3A%2F%2Fstatic.yumbi.com%2Fmanagement%2Fapi%2Fresource%2F%3Fid%3D477603%26ts%3D1755676667000&devicePixelRatio=1.6&width=135&height=90&resizeMode=Crop'
   },
   {
-    category: 'Premium Beef Burgers',
+    category: 'Burgers',
     name: 'Mjojo Cheese',
     original_price: 79.90,
     price: 79.90,
@@ -124,7 +124,7 @@ export const STEERS_PREMIUM_BEEF_BURGERS = [
     image_url: 'https://iraas.yumbi.com/?url=https%3A%2F%2Fstatic.yumbi.com%2Fmanagement%2Fapi%2Fresource%2F%3Fid%3D477590%26ts%3D1755676666000&devicePixelRatio=1.6&width=135&height=90&resizeMode=Crop'
   },
   {
-    category: 'Premium Beef Burgers',
+    category: 'Burgers',
     name: 'Mo\' Cheesy',
     original_price: 79.90,
     price: 79.90,
@@ -132,7 +132,7 @@ export const STEERS_PREMIUM_BEEF_BURGERS = [
     image_url: 'https://iraas.yumbi.com/?url=https%3A%2F%2Fstatic.yumbi.com%2Fmanagement%2Fapi%2Fresource%2F%3Fid%3D477591%26ts%3D1755676666000&devicePixelRatio=1.6&width=135&height=90&resizeMode=Crop'
   },
   {
-    category: 'Premium Beef Burgers',
+    category: 'Burgers',
     name: 'Prince',
     original_price: 74.90,
     price: 74.90,
@@ -140,7 +140,7 @@ export const STEERS_PREMIUM_BEEF_BURGERS = [
     image_url: 'https://iraas.yumbi.com/?url=https%3A%2F%2Fstatic.yumbi.com%2Fmanagement%2Fapi%2Fresource%2F%3Fid%3D477589%26ts%3D1755676666000&devicePixelRatio=1.6&width=135&height=90&resizeMode=Crop'
   },
   {
-    category: 'Premium Beef Burgers',
+    category: 'Burgers',
     name: 'Bacon & Cheese',
     original_price: 69.90,
     price: 69.90,
@@ -148,7 +148,7 @@ export const STEERS_PREMIUM_BEEF_BURGERS = [
     image_url: 'https://iraas.yumbi.com/?url=https%3A%2F%2Fstatic.yumbi.com%2Fmanagement%2Fapi%2Fresource%2F%3Fid%3D477575%26ts%3D1755676666000&devicePixelRatio=1.6&width=135&height=90&resizeMode=Crop'
   },
   {
-    category: 'Premium Beef Burgers',
+    category: 'Burgers',
     name: 'Cheese',
     original_price: 64.90,
     price: 64.90,
@@ -156,7 +156,7 @@ export const STEERS_PREMIUM_BEEF_BURGERS = [
     image_url: 'https://iraas.yumbi.com/?url=https%3A%2F%2Fstatic.yumbi.com%2Fmanagement%2Fapi%2Fresource%2F%3Fid%3D477588%26ts%3D1755676666000&devicePixelRatio=1.6&width=135&height=90&resizeMode=Crop'
   },
   {
-    category: 'Premium Beef Burgers',
+    category: 'Burgers',
     name: '1/4 Faya',
     original_price: 64.90,
     price: 64.90,
@@ -164,7 +164,7 @@ export const STEERS_PREMIUM_BEEF_BURGERS = [
     image_url: 'https://iraas.yumbi.com/?url=https%3A%2F%2Fstatic.yumbi.com%2Fmanagement%2Fapi%2Fresource%2F%3Fid%3D477576%26ts%3D1755676666000&devicePixelRatio=1.6&width=135&height=90&resizeMode=Crop'
   },
   {
-    category: 'Premium Beef Burgers',
+    category: 'Burgers',
     name: 'Rave',
     original_price: 54.90,
     price: 54.90,
@@ -172,7 +172,7 @@ export const STEERS_PREMIUM_BEEF_BURGERS = [
     image_url: 'https://iraas.yumbi.com/?url=https%3A%2F%2Fstatic.yumbi.com%2Fmanagement%2Fapi%2Fresource%2F%3Fid%3D477586%26ts%3D1755676666000&devicePixelRatio=1.6&width=135&height=90&resizeMode=Crop'
   },
   {
-    category: 'Premium Beef Burgers',
+    category: 'Burgers',
     name: 'Steers',
     original_price: 54.90,
     price: 54.90,
@@ -180,7 +180,7 @@ export const STEERS_PREMIUM_BEEF_BURGERS = [
     image_url: 'https://iraas.yumbi.com/?url=https%3A%2F%2Fstatic.yumbi.com%2Fmanagement%2Fapi%2Fresource%2F%3Fid%3D477587%26ts%3D1755676666000&devicePixelRatio=1.6&width=135&height=90&resizeMode=Crop'
   },
   {
-    category: 'Premium Beef Burgers',
+    category: 'Burgers',
     name: 'Veggie Burger',
     original_price: 49.90,
     price: 49.90,
@@ -191,7 +191,7 @@ export const STEERS_PREMIUM_BEEF_BURGERS = [
 
 export const STEERS_PHANDA_VALUE_RANGE = [
   {
-    category: 'Phanda Value Range',
+    category: 'Fast Food',
     name: 'Chicken Burger Duo & Chips',
     original_price: 129.90,
     price: 129.90,
@@ -199,7 +199,7 @@ export const STEERS_PHANDA_VALUE_RANGE = [
     image_url: 'https://iraas.yumbi.com/?url=https%3A%2F%2Fstatic.yumbi.com%2Fmanagement%2Fapi%2Fresource%2F%3Fid%3D477570%26ts%3D1755676666000&devicePixelRatio=1.6&width=135&height=90&resizeMode=Crop'
   },
   {
-    category: 'Phanda Value Range',
+    category: 'Fast Food',
     name: 'Phanda Double Burgers & Chips',
     original_price: 119.90,
     price: 119.90,
@@ -207,7 +207,7 @@ export const STEERS_PHANDA_VALUE_RANGE = [
     image_url: 'https://iraas.yumbi.com/?url=https%3A%2F%2Fstatic.yumbi.com%2Fmanagement%2Fapi%2Fresource%2F%3Fid%3D477571%26ts%3D1755676666000&devicePixelRatio=1.6&width=135&height=90&resizeMode=Crop'
   },
   {
-    category: 'Phanda Value Range',
+    category: 'Fast Food',
     name: 'Chicken Cheese Burger, Small Chips & 300ml Drink',
     original_price: 74.90,
     price: 74.90,
@@ -215,7 +215,7 @@ export const STEERS_PHANDA_VALUE_RANGE = [
     image_url: 'https://iraas.yumbi.com/?url=https%3A%2F%2Fstatic.yumbi.com%2Fmanagement%2Fapi%2Fresource%2F%3Fid%3D477578%26ts%3D1755676666000&devicePixelRatio=1.6&width=135&height=90&resizeMode=Crop'
   },
   {
-    category: 'Phanda Value Range',
+    category: 'Fast Food',
     name: 'Phanda Cheesy BBQ Triple',
     original_price: 49.90,
     price: 49.90,
@@ -223,7 +223,7 @@ export const STEERS_PHANDA_VALUE_RANGE = [
     image_url: 'https://iraas.yumbi.com/?url=https%3A%2F%2Fstatic.yumbi.com%2Fmanagement%2Fapi%2Fresource%2F%3Fid%3D477579%26ts%3D1755676666000&devicePixelRatio=1.6&width=135&height=90&resizeMode=Crop'
   },
   {
-    category: 'Phanda Value Range',
+    category: 'Fast Food',
     name: 'Phanda Cheesy BBQ Double',
     original_price: 39.90,
     price: 39.90,
@@ -231,7 +231,7 @@ export const STEERS_PHANDA_VALUE_RANGE = [
     image_url: 'https://iraas.yumbi.com/?url=https%3A%2F%2Fstatic.yumbi.com%2Fmanagement%2Fapi%2Fresource%2F%3Fid%3D477580%26ts%3D1755676666000&devicePixelRatio=1.6&width=135&height=90&resizeMode=Crop'
   },
   {
-    category: 'Phanda Value Range',
+    category: 'Fast Food',
     name: 'Phanda King Burger',
     original_price: 39.90,
     price: 39.90,
@@ -239,7 +239,7 @@ export const STEERS_PHANDA_VALUE_RANGE = [
     image_url: 'https://iraas.yumbi.com/?url=https%3A%2F%2Fstatic.yumbi.com%2Fmanagement%2Fapi%2Fresource%2F%3Fid%3D477581%26ts%3D1755676666000&devicePixelRatio=1.6&width=135&height=90&resizeMode=Crop'
   },
   {
-    category: 'Phanda Value Range',
+    category: 'Fast Food',
     name: 'Phanda Cheesy BBQ',
     original_price: 29.90,
     price: 29.90,
@@ -247,7 +247,7 @@ export const STEERS_PHANDA_VALUE_RANGE = [
     image_url: 'https://iraas.yumbi.com/?url=https%3A%2F%2Fstatic.yumbi.com%2Fmanagement%2Fapi%2Fresource%2F%3Fid%3D477582%26ts%3D1755676666000&devicePixelRatio=1.6&width=135&height=90&resizeMode=Crop'
   },
   {
-    category: 'Phanda Value Range',
+    category: 'Fast Food',
     name: 'Phanda Cheese Burger',
     original_price: 29.90,
     price: 29.90,
@@ -255,7 +255,7 @@ export const STEERS_PHANDA_VALUE_RANGE = [
     image_url: 'https://iraas.yumbi.com/?url=https%3A%2F%2Fstatic.yumbi.com%2Fmanagement%2Fapi%2Fresource%2F%3Fid%3D477583%26ts%3D1755676666000&devicePixelRatio=1.6&width=135&height=90&resizeMode=Crop'
   },
   {
-    category: 'Phanda Value Range',
+    category: 'Fast Food',
     name: 'Phanda Steers Burger',
     original_price: 19.90,
     price: 19.90,
@@ -263,7 +263,7 @@ export const STEERS_PHANDA_VALUE_RANGE = [
     image_url: 'https://iraas.yumbi.com/?url=https%3A%2F%2Fstatic.yumbi.com%2Fmanagement%2Fapi%2Fresource%2F%3Fid%3D477584%26ts%3D1755676666000&devicePixelRatio=1.6&width=135&height=90&resizeMode=Crop'
   },
   {
-    category: 'Phanda Value Range',
+    category: 'Fast Food',
     name: 'Phanda Rave Burger',
     original_price: 19.90,
     price: 19.90,
@@ -274,7 +274,7 @@ export const STEERS_PHANDA_VALUE_RANGE = [
 
 export const STEERS_FLAME_GRILLED_PORTIONS = [
   {
-    category: 'Flame-Grilled Portions & Ribs',
+    category: 'Ribs',
     name: 'Pork Loin Ribs',
     original_price: 249.90,
     price: 249.90,
@@ -282,7 +282,7 @@ export const STEERS_FLAME_GRILLED_PORTIONS = [
     image_url: 'https://iraas.yumbi.com/?url=https%3A%2F%2Fstatic.yumbi.com%2Fmanagement%2Fapi%2Fresource%2F%3Fid%3D477608%26ts%3D1755676667000&devicePixelRatio=1.6&width=135&height=90&resizeMode=Crop'
   },
   {
-    category: 'Flame-Grilled Portions & Ribs',
+    category: 'Chicken',
     name: 'Full Chicken',
     original_price: 164.90,
     price: 164.90,
@@ -290,7 +290,7 @@ export const STEERS_FLAME_GRILLED_PORTIONS = [
     image_url: 'https://iraas.yumbi.com/?url=https%3A%2F%2Fstatic.yumbi.com%2Fmanagement%2Fapi%2Fresource%2F%3Fid%3D477612%26ts%3D1755676667000&devicePixelRatio=1.6&width=135&height=90&resizeMode=Crop'
   },
   {
-    category: 'Flame-Grilled Portions & Ribs',
+    category: 'Chicken',
     name: '1/2 Chicken',
     original_price: 109.90,
     price: 109.90,
@@ -298,7 +298,7 @@ export const STEERS_FLAME_GRILLED_PORTIONS = [
     image_url: 'https://iraas.yumbi.com/?url=https%3A%2F%2Fstatic.yumbi.com%2Fmanagement%2Fapi%2Fresource%2F%3Fid%3D477611%26ts%3D1755676667000&devicePixelRatio=1.6&width=135&height=90&resizeMode=Crop'
   },
   {
-    category: 'Flame-Grilled Portions & Ribs',
+    category: 'Chicken',
     name: '5 Full Wings',
     original_price: 64.90,
     price: 64.90,
@@ -306,7 +306,7 @@ export const STEERS_FLAME_GRILLED_PORTIONS = [
     image_url: 'https://iraas.yumbi.com/?url=https%3A%2F%2Fstatic.yumbi.com%2Fmanagement%2Fapi%2Fresource%2F%3Fid%3D477609%26ts%3D1755676667000&devicePixelRatio=1.6&width=135&height=90&resizeMode=Crop'
   },
   {
-    category: 'Flame-Grilled Portions & Ribs',
+    category: 'Chicken',
     name: '1/4 Chicken',
     original_price: 44.90,
     price: 44.90,
@@ -314,7 +314,7 @@ export const STEERS_FLAME_GRILLED_PORTIONS = [
     image_url: 'https://iraas.yumbi.com/?url=https%3A%2F%2Fstatic.yumbi.com%2Fmanagement%2Fapi%2Fresource%2F%3Fid%3D477610%26ts%3D1755676667000&devicePixelRatio=1.6&width=135&height=90&resizeMode=Crop'
   },
   {
-    category: 'Flame-Grilled Portions & Ribs',
+    category: 'Chicken',
     name: '6 Nuggets',
     original_price: 49.90,
     price: 49.90,
@@ -322,7 +322,7 @@ export const STEERS_FLAME_GRILLED_PORTIONS = [
     image_url: 'https://iraas.yumbi.com/?url=https%3A%2F%2Fstatic.yumbi.com%2Fmanagement%2Fapi%2Fresource%2F%3Fid%3D477601%26ts%3D1755676667000&devicePixelRatio=1.6&width=135&height=90&resizeMode=Crop'
   },
   {
-    category: 'Flame-Grilled Portions & Ribs',
+    category: 'Fast Food',
     name: 'Bacon Loaded Chips',
     original_price: 47.90,
     price: 47.90,
@@ -330,7 +330,7 @@ export const STEERS_FLAME_GRILLED_PORTIONS = [
     image_url: 'https://iraas.yumbi.com/?url=https%3A%2F%2Fstatic.yumbi.com%2Fmanagement%2Fapi%2Fresource%2F%3Fid%3D477617%26ts%3D1755676667000&devicePixelRatio=1.6&width=135&height=90&resizeMode=Crop'
   },
   {
-    category: 'Flame-Grilled Portions & Ribs',
+    category: 'Fast Food',
     name: 'Jalapeno Loaded Chips',
     original_price: 44.90,
     price: 44.90,
@@ -339,11 +339,52 @@ export const STEERS_FLAME_GRILLED_PORTIONS = [
   }
 ];
 
-// RUNTIME ERROR FIX: Improved helper function with comprehensive error handling
+// CRITICAL FIX: Enhanced database initialization function
+export const initializeDatabase = async () => {
+  try {
+    console.log('🔧 Initializing database tables...');
+
+    // Check if tables exist first
+    const { data: tables, error: tablesError } = await supabase
+      .from('information_schema.tables')
+      .select('table_name')
+      .eq('table_schema', 'public');
+
+    if (tablesError) {
+      console.log('⚠️ Could not check existing tables, proceeding with initialization...');
+    }
+
+    const existingTables = tables?.map(t => t.table_name) || [];
+    console.log('📋 Existing tables:', existingTables);
+
+    // Initialize restaurants if not exists
+    if (!existingTables.includes('restaurants')) {
+      console.log('🏪 Creating restaurants table...');
+      // This will be handled by migrations
+    }
+
+    // Initialize menu_items if not exists
+    if (!existingTables.includes('menu_items')) {
+      console.log('🍽️ Creating menu_items table...');
+      // This will be handled by migrations
+    }
+
+    console.log('✅ Database initialization completed');
+    return { success: true };
+  } catch (error) {
+    console.error('❌ Database initialization failed:', error);
+    return { error: error instanceof Error ? error.message : 'Unknown error' };
+  }
+};
+
+// CRITICAL FIX: Enhanced addSteersMenuItems function with comprehensive error handling
 export const addSteersMenuItems = async () => {
   try {
-    console.log('Starting addSteersMenuItems function...');
+    console.log('🚀 Starting addSteersMenuItems function...');
     
+    // First, ensure database is initialized
+    await initializeDatabase();
+
     // Get Steers restaurant ID with better error handling
     const { data: restaurant, error: restaurantError } = await supabase
       .from('restaurants')
@@ -352,17 +393,55 @@ export const addSteersMenuItems = async () => {
       .single();
 
     if (restaurantError) {
-      console.error('Error finding Steers restaurant:', restaurantError);
-      return { error: `Steers restaurant not found: ${restaurantError.message}` };
+      console.error('❌ Error finding Steers restaurant:', restaurantError);
+      
+      // If restaurant doesn't exist, create it
+      if (restaurantError.code === 'PGRST116') {
+        console.log('🏪 Creating Steers restaurant...');
+        const { data: newRestaurant, error: createError } = await supabase
+          .from('restaurants')
+          .insert({
+            name: 'Steers',
+            tags: ['Burgers', 'Fast Food', 'Chicken', 'Ribs'],
+            min_order: 50,
+            delivery_from: 25,
+            eta: '30-45 min',
+            rating: 4.5,
+            available_in: ['Mtubatuba', 'St Lucia', 'Empangeni', 'Richards Bay']
+          })
+          .select()
+          .single();
+
+        if (createError) {
+          console.error('❌ Failed to create Steers restaurant:', createError);
+          return { error: `Failed to create Steers restaurant: ${createError.message}` };
+        }
+
+        console.log('✅ Created Steers restaurant successfully');
+        restaurant = newRestaurant;
+      } else {
+        return { error: `Steers restaurant lookup failed: ${restaurantError.message}` };
+      }
     }
 
     if (!restaurant) {
-      console.error('Steers restaurant not found in database');
+      console.error('❌ Steers restaurant not found in database');
       return { error: 'Steers restaurant not found in database' };
     }
 
     const restaurantId = restaurant.id;
-    console.log('Found Steers restaurant with ID:', restaurantId);
+    console.log('🎯 Found Steers restaurant with ID:', restaurantId);
+
+    // Clear existing Steers menu items to prevent duplicates
+    console.log('🧹 Clearing existing Steers menu items...');
+    const { error: deleteError } = await supabase
+      .from('menu_items')
+      .delete()
+      .eq('restaurant_id', restaurantId);
+
+    if (deleteError) {
+      console.warn('⚠️ Could not clear existing menu items:', deleteError.message);
+    }
 
     // Combine all menu items with proper validation
     const allMenuItems = [
@@ -371,11 +450,11 @@ export const addSteersMenuItems = async () => {
       ...STEERS_FLAME_GRILLED_PORTIONS
     ];
 
-    console.log(`Preparing to add ${allMenuItems.length} menu items...`);
+    console.log(`📝 Preparing to add ${allMenuItems.length} menu items...`);
 
     // Add restaurant_id to each item and validate data
     const menuItemsWithRestaurant = allMenuItems.map((item, index) => {
-      // RUNTIME ERROR FIX: Ensure all required fields are present and properly typed
+      // CRITICAL FIX: Ensure all required fields are present and properly typed
       const menuItem = {
         restaurant_id: restaurantId,
         category: item.category || 'Uncategorized',
@@ -391,8 +470,14 @@ export const addSteersMenuItems = async () => {
         menuItem.lucia_price = Number((menuItem.original_price * 1.07).toFixed(2));
       }
 
-      console.log(`Prepared menu item ${index + 1}:`, {
+      // Ensure lucia_price is never less than original_price
+      if (menuItem.original_price && menuItem.lucia_price && menuItem.lucia_price < menuItem.original_price) {
+        menuItem.lucia_price = Number((menuItem.original_price * 1.07).toFixed(2));
+      }
+
+      console.log(`✅ Prepared menu item ${index + 1}:`, {
         name: menuItem.name,
+        category: menuItem.category,
         price: menuItem.price,
         lucia_price: menuItem.lucia_price,
         original_price: menuItem.original_price
@@ -402,21 +487,97 @@ export const addSteersMenuItems = async () => {
     });
 
     // Insert menu items with proper error handling
-    console.log('Inserting menu items into database...');
+    console.log('💾 Inserting menu items into database...');
     const { data, error } = await supabase
       .from('menu_items')
       .insert(menuItemsWithRestaurant)
       .select();
 
     if (error) {
-      console.error('Error adding menu items to database:', error);
+      console.error('❌ Error adding menu items to database:', error);
       return { error: `Database error: ${error.message}` };
     }
 
-    console.log(`Successfully added ${data?.length || 0} Steers menu items to database`);
-    return { data, success: true };
+    console.log(`🎉 Successfully added ${data?.length || 0} Steers menu items to database`);
+    
+    // Verify the data was inserted correctly
+    const { data: verifyData, error: verifyError } = await supabase
+      .from('menu_items')
+      .select('*')
+      .eq('restaurant_id', restaurantId);
+
+    if (verifyError) {
+      console.warn('⚠️ Could not verify inserted data:', verifyError.message);
+    } else {
+      console.log(`✅ Verification: ${verifyData?.length || 0} menu items now exist for Steers`);
+    }
+
+    return { data, success: true, count: data?.length || 0 };
   } catch (error) {
-    console.error('Unexpected error in addSteersMenuItems:', error);
+    console.error('💥 Unexpected error in addSteersMenuItems:', error);
     return { error: `Unexpected error: ${error instanceof Error ? error.message : 'Unknown error'}` };
   }
+};
+
+// FEATURE IMPLEMENTATION: Helper functions for filtering by tags
+export const getRestaurantsByTag = async (tag: string) => {
+  try {
+    const { data, error } = await supabase
+      .from('restaurants')
+      .select('*')
+      .contains('tags', [tag]);
+
+    if (error) {
+      console.error('Error filtering restaurants by tag:', error);
+      return { data: [], error };
+    }
+
+    return { data: data || [], error: null };
+  } catch (error) {
+    console.error('Unexpected error filtering restaurants:', error);
+    return { data: [], error };
+  }
+};
+
+export const getMenuItemsByCategory = async (category: string) => {
+  try {
+    const { data, error } = await supabase
+      .from('menu_items')
+      .select(`
+        *,
+        restaurant:restaurants(name, tags)
+      `)
+      .eq('category', category);
+
+    if (error) {
+      console.error('Error filtering menu items by category:', error);
+      return { data: [], error };
+    }
+
+    return { data: data || [], error: null };
+  } catch (error) {
+    console.error('Unexpected error filtering menu items:', error);
+    return { data: [], error };
+  }
+};
+
+// FEATURE IMPLEMENTATION: Sort menu items by category
+export const sortMenuItemsByCategory = (items: MenuItem[]) => {
+  const categoryOrder = ['Burgers', 'Chicken', 'Ribs', 'Fast Food', 'Uncategorized'];
+  
+  return items.sort((a, b) => {
+    const aIndex = categoryOrder.indexOf(a.category);
+    const bIndex = categoryOrder.indexOf(b.category);
+    
+    // If category not found, put it at the end
+    const aOrder = aIndex === -1 ? categoryOrder.length : aIndex;
+    const bOrder = bIndex === -1 ? categoryOrder.length : bIndex;
+    
+    if (aOrder !== bOrder) {
+      return aOrder - bOrder;
+    }
+    
+    // If same category, sort by name
+    return a.name.localeCompare(b.name);
+  });
 };

@@ -1,33 +1,31 @@
 
+import React, { useEffect } from 'react';
 import { Stack } from 'expo-router';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { Platform } from 'react-native';
-import { useEffect, useState } from 'react';
-import { setupErrorLogging } from '../utils/errorLogger';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AuthProvider } from '../contexts/AuthContext';
 import { CartProvider } from '../contexts/CartContext';
+import { setupErrorLogging } from '../utils/errorLogger';
 
 export default function RootLayout() {
   useEffect(() => {
-    // Set up global error logging
+    // CRITICAL FIX: Initialize error logging as early as possible
     setupErrorLogging();
+    console.log('🚀 LuciaFood Express App initialized with enhanced error logging');
   }, []);
 
   return (
-    <SafeAreaProvider>
-      <AuthProvider>
-        <CartProvider>
-          <GestureHandlerRootView style={{ flex: 1 }}>
-            <Stack
-              screenOptions={{
-                headerShown: false,
-                animation: 'default',
-              }}
-            />
-          </GestureHandlerRootView>
-        </CartProvider>
-      </AuthProvider>
-    </SafeAreaProvider>
+    <AuthProvider>
+      <CartProvider>
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="index" />
+          <Stack.Screen name="signin" />
+          <Stack.Screen name="signup" />
+          <Stack.Screen name="forgotpassword" />
+          <Stack.Screen name="profile" />
+          <Stack.Screen name="cart" />
+          <Stack.Screen name="restaurant/[id]" />
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        </Stack>
+      </CartProvider>
+    </AuthProvider>
   );
 }

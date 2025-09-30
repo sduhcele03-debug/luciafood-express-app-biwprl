@@ -13,14 +13,14 @@ import { useLocalSearchParams, router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCart } from '../../contexts/CartContext';
-import { supabase, Restaurant, MenuItem } from '../../lib/supabase';
+import { supabase, Restaurant, MenuItem, sortMenuItemsByCategory } from '../../lib/supabase';
 import { commonStyles, colors, buttonStyles } from '../../styles/commonStyles';
 import Icon from '../../components/Icon';
 
 export default function RestaurantScreen() {
   const { id } = useLocalSearchParams();
   const { user } = useAuth();
-  const { addToCart, getCartItemCount } = useCart();
+  const { addToCart, getItemQuantity } = useCart();
   
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
@@ -65,9 +65,7 @@ export default function RestaurantScreen() {
       const { data: menuData, error: menuError } = await supabase
         .from('menu_items')
         .select('*')
-        .eq('restaurant_id', id)
-        .order('category', { ascending: true })
-        .order('name', { ascending: true });
+        .eq('restaurant_id', id);
 
       if (menuError) {
         console.error('RestaurantScreen: Error loading menu items:', menuError);
@@ -76,11 +74,14 @@ export default function RestaurantScreen() {
       }
 
       console.log(`RestaurantScreen: Loaded ${menuData?.length || 0} menu items`);
-      setMenuItems(menuData || []);
+      
+      // ITEM SORTING: Sort menu items by category
+      const sortedMenuItems = sortMenuItemsByCategory(menuData || []);
+      setMenuItems(sortedMenuItems);
 
       // Extract unique categories
       const uniqueCategories = Array.from(
-        new Set(menuData?.map(item => item.category) || [])
+        new Set(sortedMenuItems.map(item => item.category))
       );
       console.log('RestaurantScreen: Found categories:', uniqueCategories);
       setCategories(uniqueCategories);
@@ -132,7 +133,7 @@ export default function RestaurantScreen() {
   }, [user]);
 
   const renderMenuItem = useCallback((item: MenuItem) => {
-    const cartCount = getCartItemCount(item.id);
+    const cartCount = getItemQuantity(item.id);
     
     return (
       <View key={item.id} style={[commonStyles.card, { marginBottom: 16 }]}>
@@ -159,53 +160,29 @@ export default function RestaurantScreen() {
               fontSize: 16,
               fontWeight: '700',
               color: colors.text,
-              marginBottom: 8,
+              marginBottom: 4,
             }}>
               {item.name}
             </Text>
             
-            {/* RUNTIME ERROR FIX: Proper price display with lucia_price handling */}
+            <Text style={{
+              fontSize: 12,
+              color: colors.primary,
+              fontWeight: '600',
+              marginBottom: 8,
+            }}>
+              {item.category}
+            </Text>
+            
+            {/* PRICE DISPLAY REFINEMENT: Only show lucia_price */}
             <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
               <Text style={{
                 fontSize: 18,
                 fontWeight: '700',
                 color: colors.primary,
-                marginRight: 8,
               }}>
                 R{(item.lucia_price || item.price).toFixed(2)}
               </Text>
-              
-              {/* Show original price if different from lucia_price */}
-              {item.original_price && item.lucia_price && 
-               item.original_price !== item.lucia_price && (
-                <Text style={{
-                  fontSize: 14,
-                  color: colors.textLight,
-                  textDecorationLine: 'line-through',
-                }}>
-                  R{item.original_price.toFixed(2)}
-                </Text>
-              )}
-              
-              {/* Show 7% markup indicator */}
-              {item.lucia_price && item.original_price && 
-               item.lucia_price > item.original_price && (
-                <View style={{
-                  backgroundColor: colors.primary,
-                  paddingHorizontal: 6,
-                  paddingVertical: 2,
-                  borderRadius: 4,
-                  marginLeft: 8,
-                }}>
-                  <Text style={{
-                    fontSize: 10,
-                    color: colors.white,
-                    fontWeight: '600',
-                  }}>
-                    +7%
-                  </Text>
-                </View>
-              )}
             </View>
             
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -248,7 +225,7 @@ export default function RestaurantScreen() {
         </View>
       </View>
     );
-  }, [restaurant, getCartItemCount, handleAddToCart]);
+  }, [restaurant, getItemQuantity, handleAddToCart]);
 
   if (loading) {
     return (
@@ -325,7 +302,7 @@ export default function RestaurantScreen() {
           }}
         >
           <Text style={{ color: colors.white, fontWeight: '600' }}>
-            Cart ({getCartItemCount()})
+            Cart ({getItemQuantity()})
           </Text>
         </TouchableOpacity>
       </View>
@@ -350,55 +327,63 @@ export default function RestaurantScreen() {
         </View>
       </View>
 
-      {/* Category Filter */}
+      {/* IN-RESTAURANT CATEGORY FILTER UI FIX: Horizontal scrollable list */}
       {categories.length > 1 && (
-        <ScrollView 
-          horizontal 
-          showsHorizontalScrollIndicator={false}
-          style={{ padding: 20, paddingBottom: 0 }}
-        >
-          <TouchableOpacity
-            style={{
-              backgroundColor: selectedCategory === 'all' ? colors.primary : colors.backgroundAlt,
-              paddingHorizontal: 16,
-              paddingVertical: 8,
-              borderRadius: 20,
-              marginRight: 12,
-            }}
-            onPress={() => setSelectedCategory('all')}
+        <View style={{ paddingVertical: 16 }}>
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingHorizontal: 20 }}
           >
-            <Text style={{
-              color: selectedCategory === 'all' ? colors.white : colors.text,
-              fontWeight: '600',
-            }}>
-              All ({menuItems.length})
-            </Text>
-          </TouchableOpacity>
-          
-          {categories.map((category) => {
-            const categoryCount = menuItems.filter(item => item.category === category).length;
-            return (
-              <TouchableOpacity
-                key={category}
-                style={{
-                  backgroundColor: selectedCategory === category ? colors.primary : colors.backgroundAlt,
-                  paddingHorizontal: 16,
-                  paddingVertical: 8,
-                  borderRadius: 20,
-                  marginRight: 12,
-                }}
-                onPress={() => setSelectedCategory(category)}
-              >
-                <Text style={{
-                  color: selectedCategory === category ? colors.white : colors.text,
-                  fontWeight: '600',
-                }}>
-                  {category} ({categoryCount})
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
+            <TouchableOpacity
+              style={{
+                backgroundColor: selectedCategory === 'all' ? colors.primary : colors.backgroundAlt,
+                paddingHorizontal: 16,
+                paddingVertical: 8,
+                borderRadius: 20,
+                marginRight: 12,
+                minWidth: 60,
+                alignItems: 'center',
+              }}
+              onPress={() => setSelectedCategory('all')}
+            >
+              <Text style={{
+                color: selectedCategory === 'all' ? colors.white : colors.text,
+                fontWeight: '600',
+                fontSize: 14,
+              }}>
+                All ({menuItems.length})
+              </Text>
+            </TouchableOpacity>
+            
+            {categories.map((category) => {
+              const categoryCount = menuItems.filter(item => item.category === category).length;
+              return (
+                <TouchableOpacity
+                  key={category}
+                  style={{
+                    backgroundColor: selectedCategory === category ? colors.primary : colors.backgroundAlt,
+                    paddingHorizontal: 16,
+                    paddingVertical: 8,
+                    borderRadius: 20,
+                    marginRight: 12,
+                    minWidth: 80,
+                    alignItems: 'center',
+                  }}
+                  onPress={() => setSelectedCategory(category)}
+                >
+                  <Text style={{
+                    color: selectedCategory === category ? colors.white : colors.text,
+                    fontWeight: '600',
+                    fontSize: 14,
+                  }}>
+                    {category} ({categoryCount})
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </View>
       )}
 
       {/* Menu Items */}
