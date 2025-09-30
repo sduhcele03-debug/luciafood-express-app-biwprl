@@ -46,6 +46,8 @@ export default function HomeScreen() {
     // CRITICAL FIX: Add proper error handling for initial data loading
     const initializeData = async () => {
       try {
+        console.log('🚀 Initializing HomeScreen data...');
+        
         // Initialize database first
         await initializeDatabase();
         
@@ -53,13 +55,15 @@ export default function HomeScreen() {
           loadFeaturedRestaurants(),
           loadFeaturedMenuItems()
         ]);
+        
+        console.log('✅ HomeScreen data initialization completed');
       } catch (error) {
-        console.error('HomeScreen: Error initializing data:', error);
+        console.error('❌ HomeScreen: Error initializing data:', error);
       }
     };
 
     initializeData().catch(error => {
-      console.error('HomeScreen: Failed to initialize data:', error);
+      console.error('💥 HomeScreen: Failed to initialize data:', error);
     });
   }, []);
 
@@ -140,7 +144,10 @@ export default function HomeScreen() {
     <TouchableOpacity
       key={restaurant.id}
       style={[commonStyles.restaurantCard, { width: '48%', marginHorizontal: '1%' }]}
-      onPress={() => router.push(`/restaurant/${restaurant.id}`)}
+      onPress={() => {
+        console.log(`🏪 Navigating to restaurant: ${restaurant.name} (ID: ${restaurant.id})`);
+        router.push(`/restaurant/${restaurant.id}`);
+      }}
     >
       <Image
         source={
@@ -193,7 +200,10 @@ export default function HomeScreen() {
       
       <TouchableOpacity
         style={[buttonStyles.primary, { paddingVertical: 8, marginTop: 8 }]}
-        onPress={() => router.push(`/restaurant/${restaurant.id}`)}
+        onPress={() => {
+          console.log(`🛒 Order now pressed for: ${restaurant.name}`);
+          router.push(`/restaurant/${restaurant.id}`);
+        }}
       >
         <Text style={{ color: colors.white, fontWeight: '600', fontSize: 14 }}>
           Order Now
@@ -209,7 +219,10 @@ export default function HomeScreen() {
       <TouchableOpacity
         key={item.id}
         style={[commonStyles.card, { width: '48%', marginHorizontal: '1%', marginBottom: 16 }]}
-        onPress={() => router.push(`/restaurant/${item.restaurant_id}`)}
+        onPress={() => {
+          console.log(`🍽️ Menu item pressed: ${item.name} from ${item.restaurant?.name}`);
+          router.push(`/restaurant/${item.restaurant_id}`);
+        }}
       >
         {shouldShowImage && (
           <Image
@@ -251,7 +264,10 @@ export default function HomeScreen() {
         </Text>
         <TouchableOpacity
           style={[buttonStyles.primary, { paddingVertical: 6, paddingHorizontal: 12 }]}
-          onPress={() => router.push(`/restaurant/${item.restaurant_id}`)}
+          onPress={() => {
+            console.log(`📋 View menu pressed for: ${item.restaurant?.name}`);
+            router.push(`/restaurant/${item.restaurant_id}`);
+          }}
         >
           <Text style={{ color: colors.white, fontWeight: '600', fontSize: 12 }}>
             View Menu
@@ -341,7 +357,10 @@ export default function HomeScreen() {
               paddingVertical: 16,
               paddingHorizontal: 32,
             }]}
-            onPress={() => router.push('/(tabs)/restaurants')}
+            onPress={() => {
+              console.log('🛒 Order Now button pressed - navigating to restaurants');
+              router.push('/(tabs)/restaurants');
+            }}
           >
             <Text style={{ 
               color: colors.primary, 
@@ -411,7 +430,10 @@ export default function HomeScreen() {
             <Text style={[commonStyles.title, { marginBottom: 0, fontSize: 24 }]}>
               Featured Restaurants
             </Text>
-            <TouchableOpacity onPress={() => loadFeaturedRestaurants().catch(console.error)}>
+            <TouchableOpacity onPress={() => {
+              console.log('🔄 Refreshing featured restaurants...');
+              loadFeaturedRestaurants().catch(console.error);
+            }}>
               <Icon name="refresh" size={20} color={colors.primary} />
             </TouchableOpacity>
           </View>

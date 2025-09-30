@@ -8,8 +8,12 @@ import { setupErrorLogging } from '../utils/errorLogger';
 export default function RootLayout() {
   useEffect(() => {
     // CRITICAL FIX: Initialize error logging as early as possible
-    setupErrorLogging();
-    console.log('🚀 LuciaFood Express App initialized with enhanced error logging');
+    try {
+      setupErrorLogging();
+      console.log('🚀 LuciaFood Express App initialized with enhanced error logging');
+    } catch (error) {
+      console.error('❌ Failed to setup error logging:', error);
+    }
   }, []);
 
   return (
