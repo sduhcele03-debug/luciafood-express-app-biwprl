@@ -46,11 +46,7 @@ export default function CartScreen() {
   const [loading, setLoading] = useState(false);
   const [restaurantsByOrder, setRestaurantsByOrder] = useState<{[key: string]: any}>({});
 
-  useEffect(() => {
-    loadUserProfile();
-    groupCartByRestaurant();
-  }, [loadUserProfile, groupCartByRestaurant]);
-
+  // CRITICAL FIX: Define loadUserProfile function BEFORE useEffect
   const loadUserProfile = useCallback(async () => {
     if (!user) return;
 
@@ -59,7 +55,7 @@ export default function CartScreen() {
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', user.id)  // Fixed: using user_id instead of id
         .single();
 
       if (data) {
@@ -78,6 +74,7 @@ export default function CartScreen() {
     }
   }, [user]);
 
+  // CRITICAL FIX: Define groupCartByRestaurant function BEFORE useEffect
   const groupCartByRestaurant = useCallback(async () => {
     if (cart.length === 0) return;
 
@@ -114,6 +111,12 @@ export default function CartScreen() {
       console.error('Error grouping cart by restaurant:', error);
     }
   }, [cart]);
+
+  // Now useEffect can safely use the defined functions
+  useEffect(() => {
+    loadUserProfile();
+    groupCartByRestaurant();
+  }, [loadUserProfile, groupCartByRestaurant]);
 
   const subtotal = getCartTotal();
   const restaurantCount = Object.keys(restaurantsByOrder).length;

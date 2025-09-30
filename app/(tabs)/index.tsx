@@ -59,11 +59,11 @@ export default function HomeScreen() {
         return;
       }
 
-      // Shuffle and take only 4 restaurants for featured section
+      // FEATURE IMPLEMENTATION: Shuffle and take only 4 restaurants for featured section
       const shuffled = allRestaurants?.sort(() => 0.5 - Math.random()) || [];
       const featured = shuffled.slice(0, 4);
       
-      console.log(`Loaded ${featured.length} featured restaurants (limited to 4)`);
+      console.log(`Loaded ${featured.length} featured restaurants (randomly selected from ${allRestaurants?.length || 0} total)`);
       setFeaturedRestaurants(featured);
     } catch (error) {
       console.error('Error loading featured restaurants:', error);
@@ -359,18 +359,23 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* Featured Restaurants - LIMITED TO 4 */}
+        {/* Featured Restaurants - LIMITED TO 4 RANDOM */}
         <View style={{ padding: 20 }}>
-          <Text style={[commonStyles.title, { marginBottom: 20, fontSize: 24 }]}>
-            Featured Restaurants
-          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+            <Text style={[commonStyles.title, { marginBottom: 0, fontSize: 24 }]}>
+              Featured Restaurants
+            </Text>
+            <TouchableOpacity onPress={loadFeaturedRestaurants}>
+              <Icon name="refresh" size={20} color={colors.primary} />
+            </TouchableOpacity>
+          </View>
           <Text style={{
             fontSize: 16,
             color: colors.textLight,
             marginBottom: 20,
             textAlign: 'center',
           }}>
-            Discover 4 randomly selected restaurants just for you
+            🎲 4 randomly selected restaurants just for you - tap refresh for new ones!
           </Text>
           {loadingRestaurants ? (
             <ActivityIndicator size="large" color={colors.primary} />

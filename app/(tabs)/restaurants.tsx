@@ -15,7 +15,7 @@ import { supabase, Restaurant } from '../../lib/supabase';
 import { commonStyles, colors } from '../../styles/commonStyles';
 import Icon from '../../components/Icon';
 
-// Import restaurant logos
+// Import restaurant logos including new ones
 const restaurantLogos = {
   'KFC': require('../../assets/images/ea004ca1-a296-4e39-984b-2089e42444f5.jpeg'),
   'Galito\'s Chicken': require('../../assets/images/f3b869c8-2861-4512-997d-1c12896caf88.jpeg'),
@@ -30,7 +30,7 @@ export default function RestaurantsScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredRestaurants, setFilteredRestaurants] = useState<Restaurant[]>([]);
 
-  // Define filterRestaurants function BEFORE useEffect
+  // CRITICAL FIX: Define filterRestaurants function BEFORE useEffect
   const filterRestaurants = useCallback(() => {
     console.log('Filtering restaurants with query:', searchQuery);
     if (!searchQuery.trim()) {

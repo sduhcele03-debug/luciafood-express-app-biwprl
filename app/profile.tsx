@@ -48,7 +48,7 @@ export default function ProfileScreen() {
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
-      .eq('id', user.id)
+      .eq('user_id', user.id)  // Fixed: using user_id instead of id
       .single();
 
     if (error) {
@@ -67,7 +67,7 @@ export default function ProfileScreen() {
       console.log('Profile: Profile loaded successfully');
       setProfileData({
         full_name: data.full_name || '',
-        phone: data.phone || '',
+        phone: data.phone_number || '',  // Fixed: using phone_number field
         address: data.address || '',
         avatar_url: data.avatar_url || '',
       });
@@ -94,11 +94,12 @@ export default function ProfileScreen() {
     const { error } = await supabase
       .from('profiles')
       .upsert({
-        id: user.id,
+        user_id: user.id,  // Fixed: using user_id instead of id
         full_name: profileData.full_name,
-        phone: profileData.phone,
+        phone_number: profileData.phone,  // Fixed: using phone_number field
         address: profileData.address,
         avatar_url: profileData.avatar_url,
+        email: user.email,
         updated_at: new Date().toISOString(),
       });
 
@@ -107,7 +108,7 @@ export default function ProfileScreen() {
       Alert.alert('Update Failed', error.message);
     } else {
       console.log('Profile: Profile updated successfully');
-      Alert.alert('Success', 'Profile updated successfully');
+      Alert.alert('Success', 'Profile updated successfully! Your delivery information will now be auto-filled in the cart.');
     }
 
     setLoading(false);
@@ -164,6 +165,16 @@ export default function ProfileScreen() {
 
       setProfileData(prev => ({ ...prev, avatar_url: data.publicUrl }));
       console.log('Profile: Avatar uploaded successfully');
+      
+      // Auto-save the avatar URL to the profile
+      await supabase
+        .from('profiles')
+        .upsert({
+          user_id: user.id,
+          avatar_url: data.publicUrl,
+          updated_at: new Date().toISOString(),
+        });
+        
     } catch (error) {
       console.log('Profile: Avatar upload error:', error);
       Alert.alert('Upload Failed', 'Failed to upload avatar');
@@ -205,9 +216,21 @@ export default function ProfileScreen() {
             contentContainerStyle={commonStyles.content}
             showsVerticalScrollIndicator={false}
           >
-            {/* Header */}
+            {/* Header with LuciaFood Express Branding */}
             <View style={{ alignItems: 'center', marginBottom: 32 }}>
-              <Text style={[commonStyles.logo, { marginBottom: 16 }]}>Profile</Text>
+              <Image
+                source={require('../assets/images/a7a8e731-a1de-42bf-9906-e66602c740a1.jpeg')}
+                style={{
+                  width: 60,
+                  height: 60,
+                  borderRadius: 30,
+                  marginBottom: 16,
+                  backgroundColor: colors.white,
+                  padding: 5,
+                }}
+                resizeMode="contain"
+              />
+              <Text style={[commonStyles.logo, { marginBottom: 0 }]}>Profile</Text>
             </View>
 
             {/* Profile Card */}
@@ -265,7 +288,7 @@ export default function ProfileScreen() {
                   commonStyles.input,
                   focusedField === 'fullName' && commonStyles.inputFocused,
                 ]}
-                placeholder="Full Name"
+                placeholder="Full Name *"
                 placeholderTextColor={colors.textLight}
                 value={profileData.full_name}
                 onChangeText={(text) => setProfileData(prev => ({ ...prev, full_name: text }))}
@@ -279,7 +302,7 @@ export default function ProfileScreen() {
                   commonStyles.input,
                   focusedField === 'phone' && commonStyles.inputFocused,
                 ]}
-                placeholder="Phone Number"
+                placeholder="Primary Cell Phone Number *"
                 placeholderTextColor={colors.textLight}
                 value={profileData.phone}
                 onChangeText={(text) => setProfileData(prev => ({ ...prev, phone: text }))}
@@ -294,7 +317,7 @@ export default function ProfileScreen() {
                   commonStyles.input,
                   focusedField === 'address' && commonStyles.inputFocused,
                 ]}
-                placeholder="Default Delivery Address"
+                placeholder="Primary Delivery Address *"
                 placeholderTextColor={colors.textLight}
                 value={profileData.address}
                 onChangeText={(text) => setProfileData(prev => ({ ...prev, address: text }))}
@@ -303,6 +326,16 @@ export default function ProfileScreen() {
                 multiline
                 numberOfLines={3}
               />
+
+              <Text style={{
+                fontSize: 12,
+                color: colors.textLight,
+                textAlign: 'center',
+                marginBottom: 20,
+                fontStyle: 'italic',
+              }}>
+                💡 Your delivery information will be automatically filled in the cart for faster checkout
+              </Text>
 
               {/* Save Changes Button */}
               <TouchableOpacity
