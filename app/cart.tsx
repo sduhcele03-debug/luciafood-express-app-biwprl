@@ -46,7 +46,7 @@ export default function CartScreen() {
   const [loading, setLoading] = useState(false);
   const [restaurantsByOrder, setRestaurantsByOrder] = useState<{[key: string]: any}>({});
 
-  // CRITICAL FIX: Define loadUserProfile function BEFORE useEffect
+  // CRITICAL FIX: Define loadUserProfile function BEFORE useEffect with proper error handling
   const loadUserProfile = useCallback(async () => {
     if (!user) return;
 
@@ -74,7 +74,7 @@ export default function CartScreen() {
     }
   }, [user]);
 
-  // CRITICAL FIX: Define groupCartByRestaurant function BEFORE useEffect
+  // CRITICAL FIX: Define groupCartByRestaurant function BEFORE useEffect with proper error handling
   const groupCartByRestaurant = useCallback(async () => {
     if (cart.length === 0) return;
 
@@ -115,10 +115,22 @@ export default function CartScreen() {
     }
   }, [cart]);
 
-  // Now useEffect can safely use the defined functions
+  // Now useEffect can safely use the defined functions with proper error handling
   useEffect(() => {
-    loadUserProfile();
-    groupCartByRestaurant();
+    const initializeCartData = async () => {
+      try {
+        await Promise.all([
+          loadUserProfile(),
+          groupCartByRestaurant()
+        ]);
+      } catch (error) {
+        console.error('CartScreen: Error initializing cart data:', error);
+      }
+    };
+
+    initializeCartData().catch(error => {
+      console.error('CartScreen: Failed to initialize cart data:', error);
+    });
   }, [loadUserProfile, groupCartByRestaurant]);
 
   const subtotal = getCartTotal();
@@ -196,25 +208,30 @@ Total: R${total.toFixed(2)}
 
 Payment Method: ${paymentMethod}`;
 
-      // Save separate orders for each restaurant
+      // Save separate orders for each restaurant with proper error handling
       const orderPromises = Object.values(restaurantsByOrder).map(async (order: any) => {
-        return supabase.from('orders').insert({
-          customer_name: customerName,
-          phone: customerPhone,
-          address: `${address}, ${selectedTown}`,
-          town: selectedTown,
-          restaurant_id: order.restaurant.id,
-          items: order.items,
-          subtotal: order.subtotal,
-          delivery_fee: restaurantCount > 1 ? Math.round(deliveryFee / restaurantCount) : deliveryFee,
-          total: order.subtotal + (restaurantCount > 1 ? Math.round(deliveryFee / restaurantCount) : deliveryFee),
-          payment_method: paymentMethod,
-          status: 'pending',
-        });
+        try {
+          return await supabase.from('orders').insert({
+            customer_name: customerName,
+            phone: customerPhone,
+            address: `${address}, ${selectedTown}`,
+            town: selectedTown,
+            restaurant_id: order.restaurant.id,
+            items: order.items,
+            subtotal: order.subtotal,
+            delivery_fee: restaurantCount > 1 ? Math.round(deliveryFee / restaurantCount) : deliveryFee,
+            total: order.subtotal + (restaurantCount > 1 ? Math.round(deliveryFee / restaurantCount) : deliveryFee),
+            payment_method: paymentMethod,
+            status: 'pending',
+          });
+        } catch (error) {
+          console.error('Error saving individual order:', error);
+          return { error };
+        }
       });
 
-      const orderResults = await Promise.all(orderPromises);
-      const orderErrors = orderResults.filter(result => result.error);
+      const orderResults = await Promise.allSettled(orderPromises);
+      const orderErrors = orderResults.filter(result => result.status === 'rejected' || (result.status === 'fulfilled' && result.value.error));
       
       if (orderErrors.length > 0) {
         console.error('Error saving some orders:', orderErrors);
@@ -224,22 +241,27 @@ Payment Method: ${paymentMethod}`;
 
       // Open WhatsApp with enhanced fallback handling
       console.log('Attempting to send order via WhatsApp...');
-      const whatsappOpened = await openWhatsAppWithFallback(FOOD_ORDER_CHECKOUT_NUMBER, orderDetails);
-      
-      if (whatsappOpened) {
-        console.log('WhatsApp opened successfully, clearing cart...');
-        clearCart();
-        Alert.alert(
-          'Order Sent!',
-          restaurantCount > 1 
-            ? `Your multi-restaurant order from ${restaurantCount} restaurants has been sent via WhatsApp. You will receive a confirmation shortly.`
-            : 'Your order has been sent via WhatsApp. You will receive a confirmation shortly.',
-          [{ text: 'OK', onPress: () => router.push('/(tabs)/') }]
-        );
-      } else {
-        console.log('WhatsApp could not be opened, but fallback was handled');
-        // Don't clear cart if WhatsApp couldn't be opened
-        // The fallback function already handles user communication
+      try {
+        const whatsappOpened = await openWhatsAppWithFallback(FOOD_ORDER_CHECKOUT_NUMBER, orderDetails);
+        
+        if (whatsappOpened) {
+          console.log('WhatsApp opened successfully, clearing cart...');
+          clearCart();
+          Alert.alert(
+            'Order Sent!',
+            restaurantCount > 1 
+              ? `Your multi-restaurant order from ${restaurantCount} restaurants has been sent via WhatsApp. You will receive a confirmation shortly.`
+              : 'Your order has been sent via WhatsApp. You will receive a confirmation shortly.',
+            [{ text: 'OK', onPress: () => router.push('/(tabs)/') }]
+          );
+        } else {
+          console.log('WhatsApp could not be opened, but fallback was handled');
+          // Don't clear cart if WhatsApp couldn't be opened
+          // The fallback function already handles user communication
+        }
+      } catch (whatsappError) {
+        console.error('Error opening WhatsApp:', whatsappError);
+        Alert.alert('Error', 'Failed to open WhatsApp. Please try again or contact support.');
       }
     } catch (error) {
       console.error('Error during checkout:', error);

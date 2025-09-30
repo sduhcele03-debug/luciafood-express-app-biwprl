@@ -41,8 +41,21 @@ export default function HomeScreen() {
   const [loadingMenuItems, setLoadingMenuItems] = useState(true);
 
   useEffect(() => {
-    loadFeaturedRestaurants();
-    loadFeaturedMenuItems();
+    // CRITICAL FIX: Add proper error handling for initial data loading
+    const initializeData = async () => {
+      try {
+        await Promise.all([
+          loadFeaturedRestaurants(),
+          loadFeaturedMenuItems()
+        ]);
+      } catch (error) {
+        console.error('HomeScreen: Error initializing data:', error);
+      }
+    };
+
+    initializeData().catch(error => {
+      console.error('HomeScreen: Failed to initialize data:', error);
+    });
   }, []);
 
   const loadFeaturedRestaurants = async () => {
@@ -50,7 +63,7 @@ export default function HomeScreen() {
       setLoadingRestaurants(true);
       console.log('Loading featured restaurants...');
       
-      // Get all restaurants
+      // Get all restaurants with proper error handling
       const { data: allRestaurants, error } = await supabase
         .from('restaurants')
         .select('*');
@@ -78,7 +91,7 @@ export default function HomeScreen() {
       setLoadingMenuItems(true);
       console.log('Loading featured menu items...');
       
-      // Get random menu items with restaurant names
+      // Get random menu items with restaurant names with proper error handling
       const { data: allMenuItems, error } = await supabase
         .from('menu_items')
         .select(`
@@ -244,15 +257,20 @@ export default function HomeScreen() {
 
   const handleAddSteersMenuItems = async () => {
     console.log('Adding Steers menu items...');
-    const result = await addSteersMenuItems();
-    if (result.error) {
-      console.error('Failed to add menu items:', result.error);
-      alert('Failed to add menu items. Check console for details.');
-    } else {
-      console.log('Successfully added Steers menu items!');
-      alert('Successfully added Steers Premium Beef Burgers, Phanda Value Range, and Flame-Grilled Portions & Ribs!');
-      // Refresh the featured menu items to show new items
-      loadFeaturedMenuItems();
+    try {
+      const result = await addSteersMenuItems();
+      if (result.error) {
+        console.error('Failed to add menu items:', result.error);
+        alert('Failed to add menu items. Check console for details.');
+      } else {
+        console.log('Successfully added Steers menu items!');
+        alert('Successfully added Steers Premium Beef Burgers, Phanda Value Range, and Flame-Grilled Portions & Ribs!');
+        // Refresh the featured menu items to show new items
+        await loadFeaturedMenuItems();
+      }
+    } catch (error) {
+      console.error('Unexpected error adding Steers menu items:', error);
+      alert('An unexpected error occurred. Please try again.');
     }
   };
 
@@ -380,7 +398,7 @@ export default function HomeScreen() {
             <Text style={[commonStyles.title, { marginBottom: 0, fontSize: 24 }]}>
               Featured Restaurants
             </Text>
-            <TouchableOpacity onPress={loadFeaturedRestaurants}>
+            <TouchableOpacity onPress={() => loadFeaturedRestaurants().catch(console.error)}>
               <Icon name="refresh" size={20} color={colors.primary} />
             </TouchableOpacity>
           </View>

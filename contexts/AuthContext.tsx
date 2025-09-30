@@ -23,101 +23,158 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     console.log('AuthProvider: Setting up auth state listener');
     
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log('AuthProvider: Initial session:', session?.user?.email || 'No session');
-      setSession(session);
-      setUser(session?.user ?? null);
+    // CRITICAL FIX: Add proper error handling for initial session
+    const initializeAuth = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('AuthProvider: Error getting initial session:', error);
+        } else {
+          console.log('AuthProvider: Initial session:', session?.user?.email || 'No session');
+          setSession(session);
+          setUser(session?.user ?? null);
+        }
+      } catch (error) {
+        console.error('AuthProvider: Unexpected error during auth initialization:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    // Initialize auth state
+    initializeAuth().catch(error => {
+      console.error('AuthProvider: Failed to initialize auth:', error);
       setLoading(false);
     });
 
-    // Listen for auth changes
+    // Listen for auth changes with error handling
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('AuthProvider: Auth state changed:', event, session?.user?.email || 'No session');
-        setSession(session);
-        setUser(session?.user ?? null);
-        setLoading(false);
+        try {
+          console.log('AuthProvider: Auth state changed:', event, session?.user?.email || 'No session');
+          setSession(session);
+          setUser(session?.user ?? null);
+          setLoading(false);
+        } catch (error) {
+          console.error('AuthProvider: Error handling auth state change:', error);
+          setLoading(false);
+        }
       }
     );
 
     return () => {
       console.log('AuthProvider: Cleaning up auth listener');
-      subscription.unsubscribe();
+      try {
+        subscription.unsubscribe();
+      } catch (error) {
+        console.error('AuthProvider: Error unsubscribing from auth changes:', error);
+      }
     };
   }, []);
 
   const signIn = async (email: string, password: string) => {
     console.log('AuthProvider: Attempting sign in for:', email);
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    
-    if (error) {
-      console.log('AuthProvider: Sign in error:', error.message);
-    } else {
-      console.log('AuthProvider: Sign in successful');
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      
+      if (error) {
+        console.log('AuthProvider: Sign in error:', error.message);
+      } else {
+        console.log('AuthProvider: Sign in successful');
+      }
+      
+      return { error };
+    } catch (error) {
+      console.error('AuthProvider: Unexpected error during sign in:', error);
+      return { error };
     }
-    
-    return { error };
   };
 
   const signUp = async (email: string, password: string, fullName: string, phone: string) => {
     console.log('AuthProvider: Attempting sign up for:', email);
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: fullName,
-          phone: phone,
-        },
-      },
-    });
-
-    if (error) {
-      console.log('AuthProvider: Sign up error:', error.message);
-    } else if (data.user) {
-      console.log('AuthProvider: Sign up successful, creating profile');
-      // Create profile in profiles table
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert([
-          {
-            id: data.user.id,
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
             full_name: fullName,
             phone: phone,
           },
-        ]);
-      
-      if (profileError) {
-        console.log('AuthProvider: Profile creation error:', profileError.message);
-      }
-    }
+        },
+      });
 
-    return { error };
+      if (error) {
+        console.log('AuthProvider: Sign up error:', error.message);
+        return { error };
+      }
+
+      if (data.user) {
+        console.log('AuthProvider: Sign up successful, creating profile');
+        try {
+          // Create profile in profiles table with error handling
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .insert([
+              {
+                id: data.user.id,
+                user_id: data.user.id,
+                full_name: fullName,
+                phone_number: phone,
+                email: email,
+              },
+            ]);
+          
+          if (profileError) {
+            console.error('AuthProvider: Profile creation error:', profileError.message);
+            // Don't return error here as the user was created successfully
+          } else {
+            console.log('AuthProvider: Profile created successfully');
+          }
+        } catch (profileError) {
+          console.error('AuthProvider: Unexpected error creating profile:', profileError);
+        }
+      }
+
+      return { error };
+    } catch (error) {
+      console.error('AuthProvider: Unexpected error during sign up:', error);
+      return { error };
+    }
   };
 
   const signOut = async () => {
     console.log('AuthProvider: Signing out');
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      console.log('AuthProvider: Sign out error:', error.message);
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('AuthProvider: Sign out error:', error.message);
+      }
+    } catch (error) {
+      console.error('AuthProvider: Unexpected error during sign out:', error);
     }
   };
 
   const resetPassword = async (email: string) => {
     console.log('AuthProvider: Requesting password reset for:', email);
-    const { error } = await supabase.auth.resetPasswordForEmail(email);
-    
-    if (error) {
-      console.log('AuthProvider: Password reset error:', error.message);
-    } else {
-      console.log('AuthProvider: Password reset email sent');
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email);
+      
+      if (error) {
+        console.log('AuthProvider: Password reset error:', error.message);
+      } else {
+        console.log('AuthProvider: Password reset email sent');
+      }
+      
+      return { error };
+    } catch (error) {
+      console.error('AuthProvider: Unexpected error during password reset:', error);
+      return { error };
     }
-    
-    return { error };
   };
 
   const value = {
