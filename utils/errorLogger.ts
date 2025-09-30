@@ -101,13 +101,6 @@ export const setupErrorLogging = () => {
   console.log('✅ Error logging setup completed (disabled mode)');
 };
 
-  // CRITICAL FIX: Disable console overrides to prevent console warnings
-  // Console overrides are disabled to prevent warning loops
-
-  // CRITICAL FIX: Disable all advanced error handling to prevent console warnings
-  // All advanced error handling is disabled to prevent warning loops
-};
-
 // CRITICAL FIX: Simplified error logger function
 export const errorLogger = (error: any, context?: string) => {
   // CRITICAL FIX: Disable manual error reporting to prevent console warnings
