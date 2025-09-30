@@ -72,7 +72,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
   };
 
   const getCartTotal = () => {
-    return cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+    return cart.reduce((total, item) => {
+      const itemPrice = item.lucia_price || item.price;
+      return total + (itemPrice * item.quantity);
+    }, 0);
   };
 
   const getCartItemCount = () => {

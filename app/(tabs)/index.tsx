@@ -12,7 +12,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Link, router } from 'expo-router';
 import { useAuth } from '../../contexts/AuthContext';
-import { supabase, Restaurant, MenuItem } from '../../lib/supabase';
+import { supabase, Restaurant, MenuItem, addSteersMenuItems } from '../../lib/supabase';
 import { commonStyles, colors, buttonStyles } from '../../styles/commonStyles';
 import Icon from '../../components/Icon';
 import LoadingScreen from '../../components/LoadingScreen';
@@ -221,7 +221,7 @@ export default function HomeScreen() {
           color: colors.primary,
           marginBottom: 4,
         }}>
-          R{item.price.toFixed(2)}
+          R{(item.lucia_price || item.price).toFixed(2)}
         </Text>
         <Text style={{
           fontSize: 12,
@@ -240,6 +240,20 @@ export default function HomeScreen() {
         </TouchableOpacity>
       </TouchableOpacity>
     );
+  };
+
+  const handleAddSteersMenuItems = async () => {
+    console.log('Adding Steers menu items...');
+    const result = await addSteersMenuItems();
+    if (result.error) {
+      console.error('Failed to add menu items:', result.error);
+      alert('Failed to add menu items. Check console for details.');
+    } else {
+      console.log('Successfully added Steers menu items!');
+      alert('Successfully added Steers Premium Beef Burgers and Phanda Value Range items!');
+      // Refresh the featured menu items to show new items
+      loadFeaturedMenuItems();
+    }
   };
 
   if (loading) {
@@ -415,6 +429,25 @@ export default function HomeScreen() {
               {featuredMenuItems.map(renderFeaturedMenuItem)}
             </View>
           )}
+        </View>
+
+        {/* Admin Section - Temporary for adding Steers menu items */}
+        <View style={{ padding: 20, alignItems: 'center', backgroundColor: colors.background }}>
+          <Text style={[commonStyles.title, { marginBottom: 16, fontSize: 18, color: colors.textLight }]}>
+            Admin Actions
+          </Text>
+          <TouchableOpacity 
+            style={[buttonStyles.secondary, { marginBottom: 16 }]}
+            onPress={handleAddSteersMenuItems}
+          >
+            <Text style={{ 
+              color: colors.primary, 
+              fontWeight: '700',
+              fontSize: 14,
+            }}>
+              Add Steers Premium Beef Burgers & Phanda Value Range
+            </Text>
+          </TouchableOpacity>
         </View>
 
         {/* Bottom CTA */}

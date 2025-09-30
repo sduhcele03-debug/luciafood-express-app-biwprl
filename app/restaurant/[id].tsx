@@ -170,7 +170,7 @@ export default function RestaurantScreen() {
               color: colors.primary,
               marginBottom: 12,
             }}>
-              R{item.price.toFixed(2)}
+              R{(item.lucia_price || item.price).toFixed(2)}
             </Text>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <TouchableOpacity

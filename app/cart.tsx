@@ -96,7 +96,10 @@ export default function CartScreen() {
       
       restaurants?.forEach(restaurant => {
         const restaurantItems = cart.filter(item => item.restaurant_id === restaurant.id);
-        const restaurantSubtotal = restaurantItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        const restaurantSubtotal = restaurantItems.reduce((sum, item) => {
+          const itemPrice = item.lucia_price || item.price;
+          return sum + (itemPrice * item.quantity);
+        }, 0);
         
         grouped[restaurant.id] = {
           restaurant,
@@ -172,7 +175,8 @@ Address: ${address}, ${selectedTown}
         Object.values(restaurantsByOrder).forEach((order: any, index) => {
           orderDetails += `🏪 Restaurant ${index + 1}: ${order.restaurant.name}\n`;
           order.items.forEach((item: any) => {
-            orderDetails += `  ${item.quantity} x ${item.name} - R${(item.price * item.quantity).toFixed(2)}\n`;
+            const itemPrice = item.lucia_price || item.price;
+            orderDetails += `  ${item.quantity} x ${item.name} - R${(itemPrice * item.quantity).toFixed(2)}\n`;
           });
           orderDetails += `  Subtotal: R${order.subtotal.toFixed(2)}\n\n`;
         });
@@ -180,7 +184,8 @@ Address: ${address}, ${selectedTown}
         const singleOrder = Object.values(restaurantsByOrder)[0] as any;
         orderDetails += `Restaurant: ${singleOrder.restaurant.name}\n\nItems:\n`;
         singleOrder.items.forEach((item: any) => {
-          orderDetails += `${item.quantity} x ${item.name} - R${(item.price * item.quantity).toFixed(2)}\n`;
+          const itemPrice = item.lucia_price || item.price;
+          orderDetails += `${item.quantity} x ${item.name} - R${(itemPrice * item.quantity).toFixed(2)}\n`;
         });
         orderDetails += '\n';
       }
@@ -320,12 +325,12 @@ Payment Method: ${paymentMethod}`;
                         {item.name}
                       </Text>
                       <Text style={{ fontSize: 13, color: colors.textLight, marginTop: 2 }}>
-                        R{item.price.toFixed(2)} x {item.quantity}
+                        R{(item.lucia_price || item.price).toFixed(2)} x {item.quantity}
                       </Text>
                     </View>
                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                       <Text style={{ fontSize: 15, fontWeight: '700', color: colors.text, marginRight: 12 }}>
-                        R{(item.price * item.quantity).toFixed(2)}
+                        R{((item.lucia_price || item.price) * item.quantity).toFixed(2)}
                       </Text>
                       <TouchableOpacity onPress={() => removeFromCart(item.id)}>
                         <Icon name="trash" size={18} color={colors.error} />
