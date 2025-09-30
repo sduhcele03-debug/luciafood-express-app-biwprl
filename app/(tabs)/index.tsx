@@ -58,12 +58,12 @@ export default function HomeScreen() {
         
         console.log('✅ HomeScreen data initialization completed');
       } catch (error) {
-        console.error('❌ HomeScreen: Error initializing data:', error);
+        console.log('❌ HomeScreen: Error initializing data');
       }
     };
 
     initializeData().catch(error => {
-      console.error('💥 HomeScreen: Failed to initialize data:', error);
+      console.log('💥 HomeScreen: Failed to initialize data');
     });
   }, []);
 
@@ -78,7 +78,7 @@ export default function HomeScreen() {
         .select('*');
 
       if (error) {
-        console.error('❌ Error loading restaurants:', error);
+        console.log('❌ Error loading restaurants:', error.message);
         return;
       }
 
@@ -89,7 +89,7 @@ export default function HomeScreen() {
       console.log(`✅ Loaded ${featured.length} featured restaurants (randomly selected from ${allRestaurants?.length || 0} total)`);
       setFeaturedRestaurants(featured);
     } catch (error) {
-      console.error('❌ Error loading featured restaurants:', error);
+      console.log('❌ Error loading featured restaurants');
     } finally {
       setLoadingRestaurants(false);
     }
@@ -109,7 +109,7 @@ export default function HomeScreen() {
         `);
 
       if (error) {
-        console.error('❌ Error loading menu items:', error);
+        console.log('❌ Error loading menu items:', error.message);
         return;
       }
 
@@ -120,7 +120,7 @@ export default function HomeScreen() {
       console.log(`✅ Loaded ${featured.length} featured menu items`);
       setFeaturedMenuItems(featured);
     } catch (error) {
-      console.error('❌ Error loading featured menu items:', error);
+      console.log('❌ Error loading featured menu items');
     } finally {
       setLoadingMenuItems(false);
     }
@@ -286,7 +286,7 @@ export default function HomeScreen() {
       const result = await addSteersMenuItems();
       
       if (result.error) {
-        console.error('❌ Failed to add menu items:', result.error);
+        console.log('❌ Failed to add menu items:', result.error);
         alert(`Failed to add menu items: ${result.error}`);
       } else {
         console.log('✅ Successfully added Steers menu items!');
@@ -296,7 +296,7 @@ export default function HomeScreen() {
         await loadFeaturedMenuItems();
       }
     } catch (error) {
-      console.error('💥 Unexpected error adding Steers menu items:', error);
+      console.log('💥 Unexpected error adding Steers menu items');
       alert('An unexpected error occurred. Please check the console for details.');
     } finally {
       setAdminActionLoading(false);

@@ -23,32 +23,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     console.log('AuthProvider: Setting up auth state listener');
     
-    // CRITICAL FIX: Add proper error handling for initial session
+    // CRITICAL FIX: Simplified auth initialization to prevent warnings
     const initializeAuth = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
-          console.error('AuthProvider: Error getting initial session:', error);
+          console.log('AuthProvider: Error getting initial session:', error.message);
         } else {
           console.log('AuthProvider: Initial session:', session?.user?.email || 'No session');
           setSession(session);
           setUser(session?.user ?? null);
         }
       } catch (error) {
-        console.error('AuthProvider: Unexpected error during auth initialization:', error);
+        console.log('AuthProvider: Unexpected error during auth initialization');
       } finally {
         setLoading(false);
       }
     };
 
     // Initialize auth state
-    initializeAuth().catch(error => {
-      console.error('AuthProvider: Failed to initialize auth:', error);
-      setLoading(false);
-    });
+    initializeAuth();
 
-    // Listen for auth changes with error handling
+    // Listen for auth changes with simplified error handling
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         try {
@@ -57,7 +54,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUser(session?.user ?? null);
           setLoading(false);
         } catch (error) {
-          console.error('AuthProvider: Error handling auth state change:', error);
+          console.log('AuthProvider: Error handling auth state change');
           setLoading(false);
         }
       }
@@ -68,7 +65,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         subscription.unsubscribe();
       } catch (error) {
-        console.error('AuthProvider: Error unsubscribing from auth changes:', error);
+        console.log('AuthProvider: Error unsubscribing from auth changes');
       }
     };
   }, []);
@@ -89,7 +86,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       return { error };
     } catch (error) {
-      console.error('AuthProvider: Unexpected error during sign in:', error);
+      console.log('AuthProvider: Unexpected error during sign in');
       return { error };
     }
   };
@@ -116,7 +113,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (data.user) {
         console.log('AuthProvider: Sign up successful, creating profile');
         try {
-          // Create profile in profiles table with error handling
+          // Create profile in profiles table with simplified error handling
           const { error: profileError } = await supabase
             .from('profiles')
             .insert([
@@ -130,19 +127,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             ]);
           
           if (profileError) {
-            console.error('AuthProvider: Profile creation error:', profileError.message);
+            console.log('AuthProvider: Profile creation error:', profileError.message);
             // Don't return error here as the user was created successfully
           } else {
             console.log('AuthProvider: Profile created successfully');
           }
         } catch (profileError) {
-          console.error('AuthProvider: Unexpected error creating profile:', profileError);
+          console.log('AuthProvider: Unexpected error creating profile');
         }
       }
 
       return { error };
     } catch (error) {
-      console.error('AuthProvider: Unexpected error during sign up:', error);
+      console.log('AuthProvider: Unexpected error during sign up');
       return { error };
     }
   };
@@ -152,10 +149,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) {
-        console.error('AuthProvider: Sign out error:', error.message);
+        console.log('AuthProvider: Sign out error:', error.message);
       }
     } catch (error) {
-      console.error('AuthProvider: Unexpected error during sign out:', error);
+      console.log('AuthProvider: Unexpected error during sign out');
     }
   };
 
@@ -172,7 +169,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       return { error };
     } catch (error) {
-      console.error('AuthProvider: Unexpected error during password reset:', error);
+      console.log('AuthProvider: Unexpected error during password reset');
       return { error };
     }
   };

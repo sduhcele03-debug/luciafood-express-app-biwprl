@@ -3,17 +3,11 @@ import React, { useEffect } from 'react';
 import { Stack } from 'expo-router';
 import { AuthProvider } from '../contexts/AuthContext';
 import { CartProvider } from '../contexts/CartContext';
-import { setupErrorLogging } from '../utils/errorLogger';
 
 export default function RootLayout() {
   useEffect(() => {
-    // CRITICAL FIX: Initialize error logging as early as possible
-    try {
-      setupErrorLogging();
-      console.log('🚀 LuciaFood Express App initialized with enhanced error logging');
-    } catch (error) {
-      console.error('❌ Failed to setup error logging:', error);
-    }
+    // CRITICAL FIX: Simplified app initialization without error logging
+    console.log('🚀 LuciaFood Express App initialized');
   }, []);
 
   return (

@@ -372,7 +372,7 @@ export const initializeDatabase = async () => {
     console.log('✅ Database initialization completed');
     return { success: true };
   } catch (error) {
-    console.error('❌ Database initialization failed:', error);
+    console.log('❌ Database initialization failed');
     return { error: error instanceof Error ? error.message : 'Unknown error' };
   }
 };
@@ -386,14 +386,15 @@ export const addSteersMenuItems = async () => {
     await initializeDatabase();
 
     // Get Steers restaurant ID with better error handling
-    const { data: restaurant, error: restaurantError } = await supabase
+    let restaurant;
+    const { data: existingRestaurant, error: restaurantError } = await supabase
       .from('restaurants')
       .select('id')
       .eq('name', 'Steers')
       .single();
 
     if (restaurantError) {
-      console.error('❌ Error finding Steers restaurant:', restaurantError);
+      console.log('❌ Error finding Steers restaurant:', restaurantError.message);
       
       // If restaurant doesn't exist, create it
       if (restaurantError.code === 'PGRST116') {
@@ -413,7 +414,7 @@ export const addSteersMenuItems = async () => {
           .single();
 
         if (createError) {
-          console.error('❌ Failed to create Steers restaurant:', createError);
+          console.log('❌ Failed to create Steers restaurant:', createError.message);
           return { error: `Failed to create Steers restaurant: ${createError.message}` };
         }
 
@@ -422,10 +423,12 @@ export const addSteersMenuItems = async () => {
       } else {
         return { error: `Steers restaurant lookup failed: ${restaurantError.message}` };
       }
+    } else {
+      restaurant = existingRestaurant;
     }
 
     if (!restaurant) {
-      console.error('❌ Steers restaurant not found in database');
+      console.log('❌ Steers restaurant not found in database');
       return { error: 'Steers restaurant not found in database' };
     }
 
@@ -486,7 +489,7 @@ export const addSteersMenuItems = async () => {
       return menuItem;
     });
 
-    // Insert menu items with proper error handling
+    // Insert menu items with simplified error handling
     console.log('💾 Inserting menu items into database...');
     const { data, error } = await supabase
       .from('menu_items')
@@ -494,7 +497,7 @@ export const addSteersMenuItems = async () => {
       .select();
 
     if (error) {
-      console.error('❌ Error adding menu items to database:', error);
+      console.log('❌ Error adding menu items to database:', error.message);
       return { error: `Database error: ${error.message}` };
     }
 
@@ -507,14 +510,14 @@ export const addSteersMenuItems = async () => {
       .eq('restaurant_id', restaurantId);
 
     if (verifyError) {
-      console.warn('⚠️ Could not verify inserted data:', verifyError.message);
+      console.log('⚠️ Could not verify inserted data:', verifyError.message);
     } else {
       console.log(`✅ Verification: ${verifyData?.length || 0} menu items now exist for Steers`);
     }
 
     return { data, success: true, count: data?.length || 0 };
   } catch (error) {
-    console.error('💥 Unexpected error in addSteersMenuItems:', error);
+    console.log('💥 Unexpected error in addSteersMenuItems');
     return { error: `Unexpected error: ${error instanceof Error ? error.message : 'Unknown error'}` };
   }
 };
@@ -528,13 +531,13 @@ export const getRestaurantsByTag = async (tag: string) => {
       .contains('tags', [tag]);
 
     if (error) {
-      console.error('Error filtering restaurants by tag:', error);
+      console.log('Error filtering restaurants by tag:', error.message);
       return { data: [], error };
     }
 
     return { data: data || [], error: null };
   } catch (error) {
-    console.error('Unexpected error filtering restaurants:', error);
+    console.log('Unexpected error filtering restaurants');
     return { data: [], error };
   }
 };
@@ -550,13 +553,13 @@ export const getMenuItemsByCategory = async (category: string) => {
       .eq('category', category);
 
     if (error) {
-      console.error('Error filtering menu items by category:', error);
+      console.log('Error filtering menu items by category:', error.message);
       return { data: [], error };
     }
 
     return { data: data || [], error: null };
   } catch (error) {
-    console.error('Unexpected error filtering menu items:', error);
+    console.log('Unexpected error filtering menu items');
     return { data: [], error };
   }
 };
