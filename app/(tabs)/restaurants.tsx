@@ -22,6 +22,7 @@ const restaurantLogos = {
   'Nando\'s': require('../../assets/images/23f5887f-3eee-46c9-a4fe-38bc1310eb7a.jpeg'),
   'Spur': require('../../assets/images/a49cf35b-b89b-413e-8d90-f264b2fd9558.jpeg'),
   'Hungry Lion': require('../../assets/images/8af68d59-ba87-4566-9b1c-897d59d34f63.jpeg'),
+  'Steers': require('../../assets/images/835fe18b-a4b8-43eb-be23-24259d345053.jpeg'),
 };
 
 export default function RestaurantsScreen() {

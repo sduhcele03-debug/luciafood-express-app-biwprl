@@ -23,6 +23,7 @@ const restaurantLogos = {
   'Galito\'s Chicken': require('../../assets/images/f3b869c8-2861-4512-997d-1c12896caf88.jpeg'),
   'Nando\'s': require('../../assets/images/23f5887f-3eee-46c9-a4fe-38bc1310eb7a.jpeg'),
   'Spur': require('../../assets/images/a49cf35b-b89b-413e-8d90-f264b2fd9558.jpeg'),
+  'Steers': require('../../assets/images/835fe18b-a4b8-43eb-be23-24259d345053.jpeg'),
 };
 
 export default function RestaurantScreen() {
