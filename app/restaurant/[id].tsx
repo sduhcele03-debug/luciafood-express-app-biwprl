@@ -9,39 +9,37 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
-import { useAuth } from '../../contexts/AuthContext';
-import { supabase, Restaurant, MenuItem } from '../../lib/supabase';
 import { useLocalSearchParams, router } from 'expo-router';
-import { useCart } from '../../contexts/CartContext';
-import { commonStyles, colors, buttonStyles } from '../../styles/commonStyles';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useAuth } from '../../contexts/AuthContext';
+import { useCart } from '../../contexts/CartContext';
+import { supabase, Restaurant, MenuItem } from '../../lib/supabase';
+import { commonStyles, colors, buttonStyles } from '../../styles/commonStyles';
 import Icon from '../../components/Icon';
 
-// Import restaurant logos
-const restaurantLogos = {
-  'KFC': require('../../assets/images/ea004ca1-a296-4e39-984b-2089e42444f5.jpeg'),
-  'Galito\'s Chicken': require('../../assets/images/f3b869c8-2861-4512-997d-1c12896caf88.jpeg'),
-  'Nando\'s': require('../../assets/images/23f5887f-3eee-46c9-a4fe-38bc1310eb7a.jpeg'),
-  'Spur': require('../../assets/images/a49cf35b-b89b-413e-8d90-f264b2fd9558.jpeg'),
-  'Steers': require('../../assets/images/835fe18b-a4b8-43eb-be23-24259d345053.jpeg'),
-};
-
 export default function RestaurantScreen() {
+  const { id } = useLocalSearchParams();
   const { user } = useAuth();
-  const { addToCart, getItemQuantity } = useCart();
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { addToCart, getCartItemCount } = useCart();
+  
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState<string[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
+  // RUNTIME ERROR FIX: Define loadRestaurantData function BEFORE useEffect
   const loadRestaurantData = useCallback(async () => {
-    if (!id) return;
+    if (!id) {
+      console.error('RestaurantScreen: No restaurant ID provided');
+      return;
+    }
 
     try {
       setLoading(true);
-      
-      // Load restaurant details
+      console.log('RestaurantScreen: Loading restaurant data for ID:', id);
+
+      // Load restaurant details with proper error handling
       const { data: restaurantData, error: restaurantError } = await supabase
         .from('restaurants')
         .select('*')
@@ -49,14 +47,21 @@ export default function RestaurantScreen() {
         .single();
 
       if (restaurantError) {
-        console.error('Error loading restaurant:', restaurantError);
+        console.error('RestaurantScreen: Error loading restaurant:', restaurantError);
         Alert.alert('Error', 'Failed to load restaurant details');
         return;
       }
 
+      if (!restaurantData) {
+        console.error('RestaurantScreen: Restaurant not found');
+        Alert.alert('Error', 'Restaurant not found');
+        return;
+      }
+
+      console.log('RestaurantScreen: Loaded restaurant:', restaurantData.name);
       setRestaurant(restaurantData);
 
-      // Load menu items
+      // Load menu items with proper error handling
       const { data: menuData, error: menuError } = await supabase
         .from('menu_items')
         .select('*')
@@ -65,145 +70,176 @@ export default function RestaurantScreen() {
         .order('name', { ascending: true });
 
       if (menuError) {
-        console.error('Error loading menu:', menuError);
+        console.error('RestaurantScreen: Error loading menu items:', menuError);
         Alert.alert('Error', 'Failed to load menu items');
         return;
       }
 
+      console.log(`RestaurantScreen: Loaded ${menuData?.length || 0} menu items`);
       setMenuItems(menuData || []);
-      
+
       // Extract unique categories
-      const uniqueCategories = [...new Set(menuData?.map(item => item.category) || [])];
+      const uniqueCategories = Array.from(
+        new Set(menuData?.map(item => item.category) || [])
+      );
+      console.log('RestaurantScreen: Found categories:', uniqueCategories);
       setCategories(uniqueCategories);
 
     } catch (error) {
-      console.error('Error loading restaurant data:', error);
-      Alert.alert('Error', 'Failed to load restaurant data');
+      console.error('RestaurantScreen: Unexpected error loading data:', error);
+      Alert.alert('Error', 'An unexpected error occurred');
     } finally {
       setLoading(false);
     }
   }, [id]);
 
   useEffect(() => {
-    loadRestaurantData();
+    loadRestaurantData().catch(error => {
+      console.error('RestaurantScreen: Failed to load restaurant data:', error);
+    });
   }, [loadRestaurantData]);
 
-  const handleAddToCart = (item: MenuItem) => {
+  const handleAddToCart = useCallback((item: MenuItem) => {
     if (!user) {
-      Alert.alert(
-        'Sign In Required',
-        'Please sign in to add items to your cart',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Sign In', onPress: () => router.push('/signin') },
-        ]
-      );
+      Alert.alert('Sign In Required', 'Please sign in to add items to cart', [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Sign In', onPress: () => router.push('/signin') }
+      ]);
       return;
     }
 
-    addToCart(item);
-    Alert.alert('Added to Cart', `${item.name} has been added to your cart`);
-  };
+    try {
+      console.log('RestaurantScreen: Adding item to cart:', item.name);
+      addToCart(item);
+      Alert.alert('Added to Cart', `${item.name} has been added to your cart`);
+    } catch (error) {
+      console.error('RestaurantScreen: Error adding item to cart:', error);
+      Alert.alert('Error', 'Failed to add item to cart');
+    }
+  }, [user, addToCart]);
 
-  const handleCheckout = () => {
+  const handleCheckout = useCallback(() => {
+    if (!user) {
+      Alert.alert('Sign In Required', 'Please sign in to proceed to checkout', [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Sign In', onPress: () => router.push('/signin') }
+      ]);
+      return;
+    }
+
+    console.log('RestaurantScreen: Navigating to cart');
     router.push('/cart');
-  };
+  }, [user]);
 
-  const renderMenuItem = (item: MenuItem) => {
-    const quantity = getItemQuantity(item.id);
-    const shouldShowImage = restaurant?.name !== 'Spur';
+  const renderMenuItem = useCallback((item: MenuItem) => {
+    const cartCount = getCartItemCount(item.id);
     
     return (
       <View key={item.id} style={[commonStyles.card, { marginBottom: 16 }]}>
         <View style={{ flexDirection: 'row' }}>
-          {shouldShowImage && (
+          {/* RUNTIME ERROR FIX: Only show image if URL exists and restaurant is not Spur */}
+          {item.image_url && restaurant?.name !== 'Spur' && (
             <Image
-              source={{ 
-                uri: item.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=150&h=150&fit=crop'
-              }}
+              source={{ uri: item.image_url }}
               style={{
-                width: 80,
-                height: 80,
+                width: 100,
+                height: 100,
                 borderRadius: 12,
                 marginRight: 16,
               }}
               resizeMode="cover"
+              onError={(error) => {
+                console.log('RestaurantScreen: Image load error for item:', item.name, error);
+              }}
             />
           )}
+          
           <View style={{ flex: 1 }}>
             <Text style={{
               fontSize: 16,
               fontWeight: '700',
               color: colors.text,
-              marginBottom: 4,
+              marginBottom: 8,
             }}>
               {item.name}
             </Text>
-            {item.tags && item.tags.length > 0 && (
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 8 }}>
-                {item.tags.map((tag, index) => (
-                  <View
-                    key={index}
-                    style={{
-                      backgroundColor: colors.backgroundAlt,
-                      paddingHorizontal: 8,
-                      paddingVertical: 2,
-                      borderRadius: 12,
-                      marginRight: 6,
-                      marginBottom: 4,
-                    }}
-                  >
-                    <Text style={{
-                      fontSize: 10,
-                      color: colors.textLight,
-                      fontWeight: '500',
-                    }}>
-                      {tag}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            )}
-            <Text style={{
-              fontSize: 18,
-              fontWeight: '700',
-              color: colors.primary,
-              marginBottom: 12,
-            }}>
-              R{(item.lucia_price || item.price).toFixed(2)}
-            </Text>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            
+            {/* RUNTIME ERROR FIX: Proper price display with lucia_price handling */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+              <Text style={{
+                fontSize: 18,
+                fontWeight: '700',
+                color: colors.primary,
+                marginRight: 8,
+              }}>
+                R{(item.lucia_price || item.price).toFixed(2)}
+              </Text>
+              
+              {/* Show original price if different from lucia_price */}
+              {item.original_price && item.lucia_price && 
+               item.original_price !== item.lucia_price && (
+                <Text style={{
+                  fontSize: 14,
+                  color: colors.textLight,
+                  textDecorationLine: 'line-through',
+                }}>
+                  R{item.original_price.toFixed(2)}
+                </Text>
+              )}
+              
+              {/* Show 7% markup indicator */}
+              {item.lucia_price && item.original_price && 
+               item.lucia_price > item.original_price && (
+                <View style={{
+                  backgroundColor: colors.primary,
+                  paddingHorizontal: 6,
+                  paddingVertical: 2,
+                  borderRadius: 4,
+                  marginLeft: 8,
+                }}>
+                  <Text style={{
+                    fontSize: 10,
+                    color: colors.white,
+                    fontWeight: '600',
+                  }}>
+                    +7%
+                  </Text>
+                </View>
+              )}
+            </View>
+            
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
               <TouchableOpacity
                 style={[buttonStyles.primary, { 
                   paddingVertical: 8, 
                   paddingHorizontal: 16,
                   flex: 1,
+                  marginRight: cartCount > 0 ? 12 : 0,
                 }]}
                 onPress={() => handleAddToCart(item)}
               >
                 <Text style={{ 
                   color: colors.white, 
-                  fontWeight: '600', 
+                  fontWeight: '600',
                   fontSize: 14,
-                  textAlign: 'center',
                 }}>
                   Add to Cart
                 </Text>
               </TouchableOpacity>
-              {quantity > 0 && (
+              
+              {cartCount > 0 && (
                 <View style={{
                   backgroundColor: colors.primary,
-                  borderRadius: 12,
-                  paddingHorizontal: 8,
-                  paddingVertical: 4,
-                  marginLeft: 8,
+                  borderRadius: 20,
+                  paddingHorizontal: 12,
+                  paddingVertical: 6,
                 }}>
                   <Text style={{
                     color: colors.white,
                     fontWeight: '700',
-                    fontSize: 12,
+                    fontSize: 14,
                   }}>
-                    {quantity}
+                    {cartCount}
                   </Text>
                 </View>
               )}
@@ -212,174 +248,203 @@ export default function RestaurantScreen() {
         </View>
       </View>
     );
-  };
+  }, [restaurant, getCartItemCount, handleAddToCart]);
 
   if (loading) {
     return (
-      <SafeAreaView style={commonStyles.container}>
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={{ marginTop: 16, color: colors.textLight }}>
-            Loading restaurant...
-          </Text>
-        </View>
+      <SafeAreaView style={[commonStyles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={{ marginTop: 16, color: colors.textLight }}>
+          Loading restaurant...
+        </Text>
       </SafeAreaView>
     );
   }
 
   if (!restaurant) {
     return (
-      <SafeAreaView style={commonStyles.container}>
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-          <Icon name="restaurant" size={60} color={colors.textLight} />
-          <Text style={[commonStyles.title, { marginTop: 16 }]}>
-            Restaurant not found
+      <SafeAreaView style={[commonStyles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <Icon name="restaurant" size={60} color={colors.textLight} />
+        <Text style={{
+          fontSize: 18,
+          fontWeight: '600',
+          color: colors.text,
+          marginTop: 16,
+          textAlign: 'center',
+        }}>
+          Restaurant not found
+        </Text>
+        <TouchableOpacity
+          style={[buttonStyles.primary, { marginTop: 16 }]}
+          onPress={() => router.back()}
+        >
+          <Text style={{ color: colors.white, fontWeight: '600' }}>
+            Go Back
           </Text>
-          <TouchableOpacity
-            style={[buttonStyles.primary, { marginTop: 20 }]}
-            onPress={() => router.back()}
-          >
-            <Text style={{ color: colors.white, fontWeight: '700', fontSize: 16 }}>
-              Go Back
-            </Text>
-          </TouchableOpacity>
-        </View>
+        </TouchableOpacity>
       </SafeAreaView>
     );
   }
 
+  // Filter menu items by selected category
+  const filteredMenuItems = selectedCategory === 'all' 
+    ? menuItems 
+    : menuItems.filter(item => item.category === selectedCategory);
+
   return (
-    <SafeAreaView style={commonStyles.container}>
+    <SafeAreaView style={[commonStyles.container, { paddingBottom: 80 }]}>
       {/* Header */}
       <View style={{ 
         flexDirection: 'row', 
         alignItems: 'center', 
-        padding: 20, 
-        paddingBottom: 10,
-        backgroundColor: colors.white,
+        padding: 20,
         borderBottomWidth: 1,
-        borderBottomColor: colors.border,
+        borderBottomColor: colors.backgroundAlt,
       }}>
-        <TouchableOpacity onPress={() => router.back()}>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={{ marginRight: 16 }}
+        >
           <Icon name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={[commonStyles.title, { marginLeft: 16, marginBottom: 0, flex: 1 }]}>
-          {restaurant.name}
-        </Text>
-        <TouchableOpacity onPress={handleCheckout}>
-          <Icon name="basket" size={24} color={colors.primary} />
+        <View style={{ flex: 1 }}>
+          <Text style={[commonStyles.title, { marginBottom: 4 }]}>
+            {restaurant.name}
+          </Text>
+          <Text style={{ color: colors.textLight, fontSize: 14 }}>
+            {restaurant.cuisine_type || 'Restaurant'}
+          </Text>
+        </View>
+        <TouchableOpacity
+          onPress={handleCheckout}
+          style={{
+            backgroundColor: colors.primary,
+            borderRadius: 20,
+            paddingHorizontal: 16,
+            paddingVertical: 8,
+          }}
+        >
+          <Text style={{ color: colors.white, fontWeight: '600' }}>
+            Cart ({getCartItemCount()})
+          </Text>
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 20 }}>
-        {/* Restaurant Header */}
-        <View style={{ padding: 20 }}>
-          <Image
-            source={
-              restaurantLogos[restaurant.name as keyof typeof restaurantLogos] ||
-              { uri: restaurant.image || restaurant.logo_url || 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=400&h=200&fit=crop' }
-            }
+      {/* Restaurant Info */}
+      <View style={{ padding: 20, backgroundColor: colors.backgroundAlt }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
+          <Text style={{ color: colors.textLight }}>
+            Min order: R{restaurant.min_order}
+          </Text>
+          <Text style={{ color: colors.textLight }}>
+            Delivery: R{restaurant.delivery_from}
+          </Text>
+        </View>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+          <Text style={{ color: colors.textLight }}>
+            Rating: {restaurant.rating || '4.5'} ⭐
+          </Text>
+          <Text style={{ color: colors.textLight }}>
+            Time: {restaurant.delivery_time || restaurant.eta}
+          </Text>
+        </View>
+      </View>
+
+      {/* Category Filter */}
+      {categories.length > 1 && (
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false}
+          style={{ padding: 20, paddingBottom: 0 }}
+        >
+          <TouchableOpacity
             style={{
-              width: '100%',
-              height: 200,
-              borderRadius: 16,
-              marginBottom: 16,
+              backgroundColor: selectedCategory === 'all' ? colors.primary : colors.backgroundAlt,
+              paddingHorizontal: 16,
+              paddingVertical: 8,
+              borderRadius: 20,
+              marginRight: 12,
             }}
-            resizeMode="cover"
-          />
+            onPress={() => setSelectedCategory('all')}
+          >
+            <Text style={{
+              color: selectedCategory === 'all' ? colors.white : colors.text,
+              fontWeight: '600',
+            }}>
+              All ({menuItems.length})
+            </Text>
+          </TouchableOpacity>
           
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <View>
-              <Text style={{
-                fontSize: 24,
-                fontWeight: '800',
-                color: colors.text,
-                marginBottom: 4,
-              }}>
-                {restaurant.name}
-              </Text>
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Icon name="star" size={16} color={colors.primary} />
+          {categories.map((category) => {
+            const categoryCount = menuItems.filter(item => item.category === category).length;
+            return (
+              <TouchableOpacity
+                key={category}
+                style={{
+                  backgroundColor: selectedCategory === category ? colors.primary : colors.backgroundAlt,
+                  paddingHorizontal: 16,
+                  paddingVertical: 8,
+                  borderRadius: 20,
+                  marginRight: 12,
+                }}
+                onPress={() => setSelectedCategory(category)}
+              >
                 <Text style={{
-                  fontSize: 16,
+                  color: selectedCategory === category ? colors.white : colors.text,
                   fontWeight: '600',
-                  color: colors.text,
-                  marginLeft: 4,
                 }}>
-                  {restaurant.rating || '4.5'}
+                  {category} ({categoryCount})
                 </Text>
-                <Text style={{
-                  fontSize: 14,
-                  color: colors.textLight,
-                  marginLeft: 8,
-                }}>
-                  • {restaurant.eta || '30-45 min'}
-                </Text>
-              </View>
-            </View>
-          </View>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      )}
 
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+      {/* Menu Items */}
+      <ScrollView 
+        showsVerticalScrollIndicator={false}
+        style={{ flex: 1 }}
+        contentContainerStyle={{ padding: 20 }}
+      >
+        {filteredMenuItems.length === 0 ? (
+          <View style={{ alignItems: 'center', marginTop: 40 }}>
+            <Icon name="restaurant" size={60} color={colors.textLight} />
             <Text style={{
-              fontSize: 14,
-              color: colors.textLight,
+              fontSize: 18,
+              fontWeight: '600',
+              color: colors.text,
+              marginTop: 16,
+              textAlign: 'center',
             }}>
-              Min order: R{restaurant.min_order}
+              No menu items available
             </Text>
             <Text style={{
               fontSize: 14,
               color: colors.textLight,
+              marginTop: 8,
+              textAlign: 'center',
             }}>
-              Delivery from: R{restaurant.delivery_from}
-            </Text>
-          </View>
-
-          {restaurant.tags && restaurant.tags.length > 0 && (
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 12 }}>
-              {restaurant.tags.map((tag, index) => (
-                <View
-                  key={index}
-                  style={{
-                    backgroundColor: colors.backgroundAlt,
-                    paddingHorizontal: 12,
-                    paddingVertical: 6,
-                    borderRadius: 16,
-                    marginRight: 8,
-                    marginBottom: 8,
-                  }}
-                >
-                  <Text style={{
-                    fontSize: 12,
-                    color: colors.textLight,
-                    fontWeight: '500',
-                  }}>
-                    {tag}
-                  </Text>
-                </View>
-              ))}
-            </View>
-          )}
-        </View>
-
-        {/* Menu Items by Category */}
-        <View style={{ padding: 20 }}>
-          {categories.map((category) => (
-            <View key={category} style={{ marginBottom: 32 }}>
-              <Text style={{
-                fontSize: 20,
-                fontWeight: '700',
-                color: colors.text,
-                marginBottom: 16,
-              }}>
-                {category}
-              </Text>
-              {menuItems
-                .filter(item => item.category === category)
-                .map(renderMenuItem)
+              {selectedCategory !== 'all' 
+                ? `No items in ${selectedCategory} category`
+                : 'Menu items will be added soon'
               }
-            </View>
-          ))}
-        </View>
+            </Text>
+          </View>
+        ) : (
+          <>
+            <Text style={{
+              fontSize: 16,
+              fontWeight: '600',
+              color: colors.text,
+              marginBottom: 16,
+            }}>
+              {filteredMenuItems.length} items
+              {selectedCategory !== 'all' && ` in ${selectedCategory}`}
+            </Text>
+            {filteredMenuItems.map(renderMenuItem)}
+          </>
+        )}
       </ScrollView>
     </SafeAreaView>
   );

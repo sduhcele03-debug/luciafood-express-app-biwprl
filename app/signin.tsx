@@ -9,6 +9,7 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Image,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -45,6 +46,15 @@ export default function SignInScreen() {
     }
 
     setLoading(false);
+  };
+
+  // SOCIAL LOGIN INTEGRATION: Handle social login (placeholder for now)
+  const handleGoogleSignIn = () => {
+    Alert.alert('Coming Soon', 'Google Sign-In will be available soon!');
+  };
+
+  const handleFacebookSignIn = () => {
+    Alert.alert('Coming Soon', 'Facebook Sign-In will be available soon!');
   };
 
   return (
@@ -138,32 +148,84 @@ export default function SignInScreen() {
                 </TouchableOpacity>
               </Link>
 
-              {/* Social Buttons (Disabled) */}
+              {/* SOCIAL LOGIN INTEGRATION: Updated Social Buttons with Logos */}
               <View style={{ marginTop: 24 }}>
+                <Text style={{
+                  textAlign: 'center',
+                  color: colors.textLight,
+                  marginBottom: 16,
+                  fontSize: 14,
+                }}>
+                  Or continue with
+                </Text>
+
+                {/* Google Sign In Button */}
                 <TouchableOpacity
-                  style={[buttonStyles.disabled, { marginBottom: 12 }]}
-                  disabled
+                  style={[
+                    buttonStyles.secondary,
+                    {
+                      backgroundColor: colors.white,
+                      borderWidth: 1,
+                      borderColor: colors.backgroundAlt,
+                      marginBottom: 12,
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }
+                  ]}
+                  onPress={handleGoogleSignIn}
                 >
+                  <Image
+                    source={require('../assets/images/85d5d39b-a3aa-4024-a986-fca54251b8e2.jpeg')}
+                    style={{
+                      width: 24,
+                      height: 24,
+                      marginRight: 12,
+                    }}
+                    resizeMode="contain"
+                  />
                   <Text
                     style={{
-                      color: colors.textLight,
+                      color: colors.text,
                       fontSize: 16,
                       fontWeight: '600',
                     }}
                   >
-                    Continue with Google (Coming Soon)
+                    Continue with Google
                   </Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={buttonStyles.disabled} disabled>
+                {/* Facebook Sign In Button */}
+                <TouchableOpacity
+                  style={[
+                    buttonStyles.secondary,
+                    {
+                      backgroundColor: '#1877F2',
+                      marginBottom: 12,
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }
+                  ]}
+                  onPress={handleFacebookSignIn}
+                >
+                  <Image
+                    source={require('../assets/images/b53bee48-3371-4ac8-8a54-bfa7dd93ce4e.jpeg')}
+                    style={{
+                      width: 24,
+                      height: 24,
+                      marginRight: 12,
+                    }}
+                    resizeMode="contain"
+                  />
                   <Text
                     style={{
-                      color: colors.textLight,
+                      color: colors.white,
                       fontSize: 16,
                       fontWeight: '600',
                     }}
                   >
-                    Continue with Facebook (Coming Soon)
+                    Continue with Facebook
                   </Text>
                 </TouchableOpacity>
               </View>
