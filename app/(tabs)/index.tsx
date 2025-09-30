@@ -250,7 +250,7 @@ export default function HomeScreen() {
       alert('Failed to add menu items. Check console for details.');
     } else {
       console.log('Successfully added Steers menu items!');
-      alert('Successfully added Steers Premium Beef Burgers and Phanda Value Range items!');
+      alert('Successfully added Steers Premium Beef Burgers, Phanda Value Range, and Flame-Grilled Portions & Ribs!');
       // Refresh the featured menu items to show new items
       loadFeaturedMenuItems();
     }
@@ -445,7 +445,7 @@ export default function HomeScreen() {
               fontWeight: '700',
               fontSize: 14,
             }}>
-              Add Steers Premium Beef Burgers & Phanda Value Range
+              Add New Steers Menu Items (Phanda Value Range + Flame-Grilled)
             </Text>
           </TouchableOpacity>
         </View>
