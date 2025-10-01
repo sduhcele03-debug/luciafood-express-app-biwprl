@@ -113,3 +113,5 @@ export const errorLogger = (error: any, context?: string) => {
 
 // CRITICAL FIX: Don't initialize error logging immediately to prevent loops
 // It will be initialized from the main app layout
+
+export default { setupErrorLogging, errorLogger };

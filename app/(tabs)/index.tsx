@@ -246,7 +246,7 @@ export default function HomeScreen() {
         }}>
           {item.name}
         </Text>
-        {/* PRICE DISPLAY REFINEMENT: Only show lucia_price */}
+        {/* PRICE DISPLAY CLEANUP: Only show lucia_price */}
         <Text style={{
           fontSize: 16,
           fontWeight: '700',

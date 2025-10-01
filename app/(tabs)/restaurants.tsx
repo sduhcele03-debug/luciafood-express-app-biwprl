@@ -359,7 +359,7 @@ export default function RestaurantsScreen() {
             {item.category}
           </Text>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-            {/* PRICE DISPLAY REFINEMENT: Only show lucia_price */}
+            {/* PRICE DISPLAY CLEANUP: Only show lucia_price */}
             <Text style={{
               fontSize: 18,
               fontWeight: '700',

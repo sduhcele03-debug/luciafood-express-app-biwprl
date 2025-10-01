@@ -25,15 +25,32 @@ interface ProfileData {
   address: string;
 }
 
+// FEATURE IMPLEMENTATION: Town list and dynamic delivery fee calculation
+const TOWN_DELIVERY_FEES = {
+  'Mtubatuba Town': 25,
+  'Riverview': 25,
+  'Nordale': 30,
+  'KwaMsane': 30,
+  'Nkodibe': 30,
+  'Richards Bay': 30,
+  'Esikhawini': 35,
+  'Meerensee': 40,
+  'Mzingazi': 45,
+  'Brackenham': 45,
+  'Alton': 45,
+  'Dukuduku': 55,
+  'St Lucia': 65,
+};
+
 export default function CartScreen() {
   const { user } = useAuth();
-  const { cart, removeFromCart, clearCart, getCartTotal, getRestaurantCount } = useCart();
+  const { cart, removeItem, updateQuantity, clearCart, getCartTotal, getCartItemCount, getRestaurantCount } = useCart();
   
   const [customerName, setCustomerName] = useState('');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
-  const [town, setTown] = useState('Mtubatuba');
-  const [paymentMethod, setPaymentMethod] = useState('Cash on Delivery');
+  const [town, setTown] = useState('Mtubatuba Town');
+  const [paymentMethod, setPaymentMethod] = useState('Cash');
   const [loading, setLoading] = useState(false);
 
   // CRITICAL FIX: Define loadUserProfile function BEFORE useEffect
@@ -84,6 +101,11 @@ export default function CartScreen() {
     });
   }, [loadUserProfile]);
 
+  // FEATURE IMPLEMENTATION: Dynamic delivery fee calculation
+  const getDeliveryFee = useCallback(() => {
+    return TOWN_DELIVERY_FEES[town as keyof typeof TOWN_DELIVERY_FEES] || 25;
+  }, [town]);
+
   const handleCheckout = async () => {
     if (cart.length === 0) {
       Alert.alert('Empty Cart', 'Please add items to your cart before checkout');
@@ -107,9 +129,9 @@ export default function CartScreen() {
     setLoading(true);
 
     try {
-      // Calculate totals
+      // Calculate totals with dynamic delivery fee
       const subtotal = getCartTotal();
-      const deliveryFee = 25; // Fixed delivery fee
+      const deliveryFee = getDeliveryFee();
       const total = subtotal + deliveryFee;
 
       // Get restaurant info
@@ -239,7 +261,7 @@ Please confirm this order and provide estimated delivery time.`;
   }
 
   const subtotal = getCartTotal();
-  const deliveryFee = 25;
+  const deliveryFee = getDeliveryFee();
   const total = subtotal + deliveryFee;
   const groupedCart = groupCartByRestaurant();
 
@@ -280,37 +302,67 @@ Please confirm this order and provide estimated delivery time.`;
                   }}>
                     {item.name}
                   </Text>
+                  {/* PRICE DISPLAY FIX: Only show lucia_price */}
                   <Text style={{
                     fontSize: 14,
-                    color: colors.textLight,
+                    color: colors.primary,
+                    fontWeight: '600',
+                    marginBottom: 4,
                   }}>
-                    Quantity: {item.quantity}
+                    R{(item.lucia_price || item.price).toFixed(2)} each
                   </Text>
                 </View>
                 
-                <View style={{ alignItems: 'flex-end' }}>
-                  {/* PRICE DISPLAY FIX: Only show lucia_price */}
+                <View style={{ alignItems: 'center', flexDirection: 'row' }}>
+                  {/* CART QUANTITY CONTROLS: Enhanced quantity management */}
+                  <TouchableOpacity
+                    onPress={() => removeItem(item.id)}
+                    style={{
+                      backgroundColor: colors.backgroundAlt,
+                      borderRadius: 20,
+                      width: 32,
+                      height: 32,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginRight: 12,
+                    }}
+                  >
+                    <Icon name="remove" size={16} color={colors.text} />
+                  </TouchableOpacity>
+                  
+                  <Text style={{
+                    fontSize: 16,
+                    fontWeight: '700',
+                    color: colors.text,
+                    minWidth: 30,
+                    textAlign: 'center',
+                    marginRight: 12,
+                  }}>
+                    {item.quantity}
+                  </Text>
+                  
+                  <TouchableOpacity
+                    onPress={() => updateQuantity(item.id, item.quantity + 1)}
+                    style={{
+                      backgroundColor: colors.primary,
+                      borderRadius: 20,
+                      width: 32,
+                      height: 32,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginRight: 16,
+                    }}
+                  >
+                    <Icon name="add" size={16} color={colors.white} />
+                  </TouchableOpacity>
+                  
                   <Text style={{
                     fontSize: 16,
                     fontWeight: '700',
                     color: colors.primary,
-                    marginBottom: 4,
                   }}>
                     R{((item.lucia_price || item.price) * item.quantity).toFixed(2)}
                   </Text>
-                  <TouchableOpacity
-                    onPress={() => removeFromCart(item.id)}
-                    style={{
-                      backgroundColor: colors.error,
-                      paddingHorizontal: 8,
-                      paddingVertical: 4,
-                      borderRadius: 6,
-                    }}
-                  >
-                    <Text style={{ color: colors.white, fontSize: 12 }}>
-                      Remove
-                    </Text>
-                  </TouchableOpacity>
                 </View>
               </View>
             ))}
@@ -334,8 +386,8 @@ Please confirm this order and provide estimated delivery time.`;
           </View>
           
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
-            <Text style={{ color: colors.textLight }}>Delivery Fee</Text>
-            <Text style={{ color: colors.text, fontWeight: '600' }}>R{deliveryFee.toFixed(2)}</Text>
+            <Text style={{ color: colors.textLight }}>Delivery Fee ({town})</Text>
+            <Text style={{ color: colors.text, fontWeight: '600' }}>R{getDeliveryFee().toFixed(2)}</Text>
           </View>
           
           <View style={{
@@ -388,6 +440,15 @@ Please confirm this order and provide estimated delivery time.`;
             placeholderTextColor={colors.textLight}
           />
           
+          {/* FEATURE IMPLEMENTATION: Town dropdown with delivery fees */}
+          <Text style={{
+            fontSize: 14,
+            fontWeight: '600',
+            color: colors.text,
+            marginBottom: 8,
+          }}>
+            Select Town (Delivery Fee: R{getDeliveryFee()})
+          </Text>
           <View style={{
             backgroundColor: colors.backgroundAlt,
             borderRadius: 12,
@@ -398,13 +459,25 @@ Please confirm this order and provide estimated delivery time.`;
               onValueChange={setTown}
               style={{ color: colors.text }}
             >
-              <Picker.Item label="Mtubatuba" value="Mtubatuba" />
-              <Picker.Item label="St Lucia" value="St Lucia" />
-              <Picker.Item label="Empangeni" value="Empangeni" />
-              <Picker.Item label="Richards Bay" value="Richards Bay" />
+              {Object.entries(TOWN_DELIVERY_FEES).map(([townName, fee]) => (
+                <Picker.Item 
+                  key={townName}
+                  label={`${townName} (R${fee})`} 
+                  value={townName} 
+                />
+              ))}
             </Picker>
           </View>
           
+          {/* FEATURE IMPLEMENTATION: Payment method selection */}
+          <Text style={{
+            fontSize: 14,
+            fontWeight: '600',
+            color: colors.text,
+            marginBottom: 8,
+          }}>
+            Payment Method
+          </Text>
           <View style={{
             backgroundColor: colors.backgroundAlt,
             borderRadius: 12,
@@ -415,8 +488,8 @@ Please confirm this order and provide estimated delivery time.`;
               onValueChange={setPaymentMethod}
               style={{ color: colors.text }}
             >
-              <Picker.Item label="Cash on Delivery" value="Cash on Delivery" />
-              <Picker.Item label="Card on Delivery" value="Card on Delivery" />
+              <Picker.Item label="Cash" value="Cash" />
+              <Picker.Item label="EFT" value="EFT" />
             </Picker>
           </View>
         </View>

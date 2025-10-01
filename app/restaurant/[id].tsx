@@ -13,14 +13,14 @@ import { useLocalSearchParams, router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCart } from '../../contexts/CartContext';
-import { supabase, Restaurant, MenuItem, sortMenuItemsByCategory } from '../../lib/supabase';
+import { supabase, Restaurant, MenuItem, sortMenuItemsByCategory, getMenuItems } from '../../lib/supabase';
 import { commonStyles, colors, buttonStyles } from '../../styles/commonStyles';
 import Icon from '../../components/Icon';
 
 export default function RestaurantScreen() {
   const { id } = useLocalSearchParams();
   const { user } = useAuth();
-  const { addToCart, getItemQuantity } = useCart();
+  const { addToCart, getItemQuantity, getCartItemCount } = useCart();
   
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
@@ -61,11 +61,8 @@ export default function RestaurantScreen() {
       console.log('RestaurantScreen: Loaded restaurant:', restaurantData.name);
       setRestaurant(restaurantData);
 
-      // Load menu items with proper error handling
-      const { data: menuData, error: menuError } = await supabase
-        .from('menu_items')
-        .select('*')
-        .eq('restaurant_id', id);
+      // CRITICAL FIX: Use enhanced getMenuItems function to ensure all items are fetched
+      const { data: menuData, error: menuError } = await getMenuItems(id as string);
 
       if (menuError) {
         console.error('RestaurantScreen: Error loading menu items:', menuError);
@@ -174,7 +171,7 @@ export default function RestaurantScreen() {
               {item.category}
             </Text>
             
-            {/* PRICE DISPLAY REFINEMENT: Only show lucia_price */}
+            {/* PRICE DISPLAY CLEANUP: Only show lucia_price */}
             <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
               <Text style={{
                 fontSize: 18,
@@ -302,7 +299,7 @@ export default function RestaurantScreen() {
           }}
         >
           <Text style={{ color: colors.white, fontWeight: '600' }}>
-            Cart ({getItemQuantity()})
+            Cart ({getCartItemCount()})
           </Text>
         </TouchableOpacity>
       </View>

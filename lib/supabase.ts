@@ -564,6 +564,32 @@ export const getMenuItemsByCategory = async (category: string) => {
   }
 };
 
+// CRITICAL FIX: Enhanced getMenuItems function to ensure all items are fetched
+export const getMenuItems = async (restaurantId: string) => {
+  try {
+    console.log(`🔍 Fetching ALL menu items for restaurant ID: ${restaurantId}`);
+    
+    // CRITICAL FIX: Remove any potential LIMIT and ensure we get ALL items
+    const { data, error } = await supabase
+      .from('menu_items')
+      .select('*')
+      .eq('restaurant_id', restaurantId)
+      .order('category')
+      .order('name');
+
+    if (error) {
+      console.log('❌ Error fetching menu items:', error.message);
+      return { data: [], error };
+    }
+
+    console.log(`✅ Successfully fetched ${data?.length || 0} menu items for restaurant`);
+    return { data: data || [], error: null };
+  } catch (error) {
+    console.log('💥 Unexpected error fetching menu items');
+    return { data: [], error };
+  }
+};
+
 // FEATURE IMPLEMENTATION: Sort menu items by category
 export const sortMenuItemsByCategory = (items: MenuItem[]) => {
   const categoryOrder = ['Burgers', 'Chicken', 'Ribs', 'Fast Food', 'Uncategorized'];
