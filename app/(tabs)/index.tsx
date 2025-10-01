@@ -40,7 +40,6 @@ export default function HomeScreen() {
   const [featuredMenuItems, setFeaturedMenuItems] = useState<MenuItemWithRestaurant[]>([]);
   const [loadingRestaurants, setLoadingRestaurants] = useState(true);
   const [loadingMenuItems, setLoadingMenuItems] = useState(true);
-  const [adminActionLoading, setAdminActionLoading] = useState(false);
 
   useEffect(() => {
     // CRITICAL FIX: Add proper error handling for initial data loading
@@ -277,32 +276,6 @@ export default function HomeScreen() {
     );
   };
 
-  // CRITICAL FIX: Enhanced admin action with comprehensive error handling
-  const handleAddSteersMenuItems = async () => {
-    console.log('🚀 Adding Steers menu items...');
-    setAdminActionLoading(true);
-    
-    try {
-      const result = await addSteersMenuItems();
-      
-      if (result.error) {
-        console.log('❌ Failed to add menu items:', result.error);
-        alert(`Failed to add menu items: ${result.error}`);
-      } else {
-        console.log('✅ Successfully added Steers menu items!');
-        alert(`Successfully added ${result.count || 'all'} Steers menu items including Premium Beef Burgers, Phanda Value Range, and Flame-Grilled Portions & Ribs!`);
-        
-        // Refresh the featured menu items to show new items
-        await loadFeaturedMenuItems();
-      }
-    } catch (error) {
-      console.log('💥 Unexpected error adding Steers menu items');
-      alert('An unexpected error occurred. Please check the console for details.');
-    } finally {
-      setAdminActionLoading(false);
-    }
-  };
-
   if (loading) {
     return <LoadingScreen />;
   }
@@ -482,53 +455,6 @@ export default function HomeScreen() {
               {featuredMenuItems.map(renderFeaturedMenuItem)}
             </View>
           )}
-        </View>
-
-        {/* Admin Section - Enhanced with better UX */}
-        <View style={{ padding: 20, alignItems: 'center', backgroundColor: colors.backgroundAlt }}>
-          <Text style={[commonStyles.title, { marginBottom: 16, fontSize: 18, color: colors.textLight }]}>
-            Admin Actions
-          </Text>
-          <TouchableOpacity 
-            style={[
-              buttonStyles.secondary, 
-              { 
-                marginBottom: 16,
-                opacity: adminActionLoading ? 0.6 : 1,
-              }
-            ]}
-            onPress={handleAddSteersMenuItems}
-            disabled={adminActionLoading}
-          >
-            {adminActionLoading ? (
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <ActivityIndicator size="small" color={colors.primary} style={{ marginRight: 8 }} />
-                <Text style={{ 
-                  color: colors.primary, 
-                  fontWeight: '700',
-                  fontSize: 14,
-                }}>
-                  Adding Menu Items...
-                </Text>
-              </View>
-            ) : (
-              <Text style={{ 
-                color: colors.primary, 
-                fontWeight: '700',
-                fontSize: 14,
-              }}>
-                Add New Steers Menu Items (Phanda Value Range + Flame-Grilled)
-              </Text>
-            )}
-          </TouchableOpacity>
-          <Text style={{
-            fontSize: 12,
-            color: colors.textLight,
-            textAlign: 'center',
-            marginTop: 8,
-          }}>
-            This will add all Steers menu items including Premium Beef Burgers, Phanda Value Range, and Flame-Grilled Portions & Ribs with proper 7% markup calculation.
-          </Text>
         </View>
 
         {/* Bottom CTA */}
