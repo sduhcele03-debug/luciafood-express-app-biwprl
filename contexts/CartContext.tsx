@@ -1,6 +1,7 @@
 
 import React, { createContext, useContext, useState, ReactNode, useCallback } from 'react';
 import { MenuItem } from '../lib/supabase';
+import { Alert } from 'react-native';
 
 interface CartItem extends MenuItem {
   quantity: number;
@@ -16,6 +17,8 @@ interface CartContextType {
   getCartTotal: () => number;
   getCartItemCount: () => number;
   getRestaurantCount: () => number;
+  getRestaurantIds: () => string[];
+  getCartByRestaurant: () => { [key: string]: CartItem[] };
   // Legacy methods for backward compatibility
   addToCart: (item: MenuItem) => void;
   removeFromCart: (itemId: string) => void;
@@ -34,9 +37,37 @@ export function useCart() {
 export function CartProvider({ children }: { children: ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>([]);
 
-  // CRITICAL FIX: Enhanced addItem function with proper quantity handling
+  // MULTI-RESTAURANT VALIDATION: Check if adding item would exceed 3-restaurant limit
+  const validateMultiRestaurantLimit = useCallback((newRestaurantId: string) => {
+    const currentRestaurantIds = new Set(cart.map(item => item.restaurant_id));
+    
+    // If this restaurant is already in cart, allow it
+    if (currentRestaurantIds.has(newRestaurantId)) {
+      return true;
+    }
+    
+    // If adding this restaurant would exceed 3 restaurants, block it
+    if (currentRestaurantIds.size >= 3) {
+      Alert.alert(
+        'Restaurant Limit Reached',
+        'You can only order from a maximum of 3 restaurants at once. Please remove items from other restaurants or complete this order first.',
+        [{ text: 'OK' }]
+      );
+      return false;
+    }
+    
+    return true;
+  }, [cart]);
+
+  // CRITICAL FIX: Enhanced addItem function with multi-restaurant validation
   const addItem = useCallback((item: MenuItem, quantity: number = 1) => {
-    console.log(`🛒 Adding ${quantity} of "${item.name}" to cart`);
+    console.log(`🛒 Adding ${quantity} of "${item.name}" from restaurant ${item.restaurant_id} to cart`);
+    
+    // MULTI-RESTAURANT VALIDATION: Check restaurant limit before adding
+    if (!validateMultiRestaurantLimit(item.restaurant_id)) {
+      console.log('❌ Multi-restaurant limit exceeded, item not added');
+      return;
+    }
     
     setCart(currentCart => {
       const existingItem = currentCart.find(cartItem => cartItem.id === item.id);
@@ -55,7 +86,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         return newCart;
       }
     });
-  }, []);
+  }, [validateMultiRestaurantLimit]);
 
   // CRITICAL FIX: Enhanced removeItem function
   const removeItem = useCallback((itemId: string) => {
@@ -129,6 +160,26 @@ export function CartProvider({ children }: { children: ReactNode }) {
     return restaurantIds.size;
   }, [cart]);
 
+  // MULTI-RESTAURANT FEATURE: Get list of restaurant IDs in cart
+  const getRestaurantIds = useCallback(() => {
+    const restaurantIds = Array.from(new Set(cart.map(item => item.restaurant_id)));
+    return restaurantIds;
+  }, [cart]);
+
+  // MULTI-RESTAURANT FEATURE: Group cart items by restaurant
+  const getCartByRestaurant = useCallback(() => {
+    const grouped: { [key: string]: CartItem[] } = {};
+    
+    cart.forEach(item => {
+      if (!grouped[item.restaurant_id]) {
+        grouped[item.restaurant_id] = [];
+      }
+      grouped[item.restaurant_id].push(item);
+    });
+    
+    return grouped;
+  }, [cart]);
+
   // Legacy methods for backward compatibility
   const addToCart = useCallback((item: MenuItem) => {
     addItem(item, 1);
@@ -148,6 +199,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
     getCartTotal,
     getCartItemCount,
     getRestaurantCount,
+    getRestaurantIds,
+    getCartByRestaurant,
     // Legacy methods
     addToCart,
     removeFromCart,

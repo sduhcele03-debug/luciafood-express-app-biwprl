@@ -1,3 +1,4 @@
+
 import { Platform, Linking, Alert } from 'react-native';
 import * as Device from 'expo-device';
 import Constants from 'expo-constants';
@@ -5,8 +6,9 @@ import Constants from 'expo-constants';
 // Global WhatsApp Number Configuration for LuciaFood Express
 
 /**
- * Food Order Checkout Number
+ * WHATSAPP NUMBER VERIFICATION: Food Order Checkout Number
  * Used for: Final WhatsApp checkout when customers place food orders
+ * CRITICAL: This is the correct number (0822116064) as specified in requirements
  */
 export const FOOD_ORDER_CHECKOUT_NUMBER = '0822116064';
 
@@ -30,7 +32,9 @@ export const ADVERTISING_NUMBER = '0787549186';
  */
 export const generateWhatsAppUrl = (phoneNumber: string, message: string): string => {
   const encodedMessage = encodeURIComponent(message);
-  return `https://wa.me/27${phoneNumber}?text=${encodedMessage}`;
+  // WHATSAPP NUMBER VERIFICATION: Ensure correct format with country code
+  const formattedNumber = phoneNumber.startsWith('27') ? phoneNumber : `27${phoneNumber}`;
+  return `https://wa.me/${formattedNumber}?text=${encodedMessage}`;
 };
 
 /**
@@ -47,13 +51,18 @@ export const generateWhatsAppUrl = (phoneNumber: string, message: string): strin
 export const openWhatsAppWithFallback = async (phoneNumber: string, message: string): Promise<boolean> => {
   const encodedMessage = encodeURIComponent(message);
   
+  // WHATSAPP NUMBER VERIFICATION: Ensure correct format
+  const formattedNumber = phoneNumber.startsWith('27') ? phoneNumber : `27${phoneNumber}`;
+  
   // Primary: Use Universal Link format (most reliable for all platforms)
-  const universalUrl = `https://wa.me/27${phoneNumber}?text=${encodedMessage}`;
+  const universalUrl = `https://wa.me/${formattedNumber}?text=${encodedMessage}`;
   
   // Secondary: Traditional deep link (for older versions)
-  const deepLinkUrl = `whatsapp://send?phone=27${phoneNumber}&text=${encodedMessage}`;
+  const deepLinkUrl = `whatsapp://send?phone=${formattedNumber}&text=${encodedMessage}`;
   
   console.log('Attempting to open WhatsApp...');
+  console.log('Phone Number:', phoneNumber);
+  console.log('Formatted Number:', formattedNumber);
   console.log('Platform:', Platform.OS);
   console.log('Device Type:', Device.deviceType);
   console.log('Is Device:', Device.isDevice);

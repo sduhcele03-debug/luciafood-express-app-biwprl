@@ -20,7 +20,7 @@ import Icon from '../../components/Icon';
 export default function RestaurantScreen() {
   const { id } = useLocalSearchParams();
   const { user } = useAuth();
-  const { addToCart, getItemQuantity, getCartItemCount } = useCart();
+  const { addItem, getItemQuantity, getCartItemCount, getRestaurantCount, getRestaurantIds } = useCart();
   
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
@@ -97,6 +97,7 @@ export default function RestaurantScreen() {
     });
   }, [loadRestaurantData]);
 
+  // MULTI-RESTAURANT VALIDATION: Enhanced add to cart with restaurant limit checking
   const handleAddToCart = useCallback((item: MenuItem) => {
     if (!user) {
       Alert.alert('Sign In Required', 'Please sign in to add items to cart', [
@@ -108,13 +109,23 @@ export default function RestaurantScreen() {
 
     try {
       console.log('RestaurantScreen: Adding item to cart:', item.name);
-      addToCart(item);
-      Alert.alert('Added to Cart', `${item.name} has been added to your cart`);
+      console.log('Current restaurant count:', getRestaurantCount());
+      console.log('Current restaurant IDs:', getRestaurantIds());
+      console.log('Item restaurant ID:', item.restaurant_id);
+      
+      // The addItem function in CartContext will handle the multi-restaurant validation
+      addItem(item, 1);
+      
+      // Only show success message if item was actually added (no validation error)
+      const currentRestaurantIds = getRestaurantIds();
+      if (currentRestaurantIds.includes(item.restaurant_id)) {
+        Alert.alert('Added to Cart', `${item.name} has been added to your cart`);
+      }
     } catch (error) {
       console.error('RestaurantScreen: Error adding item to cart:', error);
       Alert.alert('Error', 'Failed to add item to cart');
     }
-  }, [user, addToCart]);
+  }, [user, addItem, getRestaurantCount, getRestaurantIds]);
 
   const handleCheckout = useCallback(() => {
     if (!user) {
@@ -265,6 +276,8 @@ export default function RestaurantScreen() {
     ? menuItems 
     : menuItems.filter(item => item.category === selectedCategory);
 
+  const restaurantCount = getRestaurantCount();
+
   return (
     <SafeAreaView style={[commonStyles.container, { paddingBottom: 80 }]}>
       {/* Header */}
@@ -303,6 +316,38 @@ export default function RestaurantScreen() {
           </Text>
         </TouchableOpacity>
       </View>
+
+      {/* Multi-Restaurant Status */}
+      {restaurantCount > 0 && (
+        <View style={{ 
+          padding: 16, 
+          backgroundColor: restaurantCount > 1 ? colors.primary + '10' : colors.backgroundAlt,
+          borderBottomWidth: 1,
+          borderBottomColor: colors.backgroundAlt,
+        }}>
+          <Text style={{ 
+            color: restaurantCount > 1 ? colors.primary : colors.textLight,
+            fontSize: 14,
+            fontWeight: '600',
+            textAlign: 'center',
+          }}>
+            {restaurantCount === 1 
+              ? '🏪 Single restaurant order'
+              : `🏪 Multi-restaurant order (${restaurantCount}/3 restaurants)`
+            }
+          </Text>
+          {restaurantCount > 1 && (
+            <Text style={{ 
+              color: colors.textLight,
+              fontSize: 12,
+              textAlign: 'center',
+              marginTop: 4,
+            }}>
+              Additional delivery fee: R{(restaurantCount - 1) * 10}
+            </Text>
+          )}
+        </View>
+      )}
 
       {/* Restaurant Info */}
       <View style={{ padding: 20, backgroundColor: colors.backgroundAlt }}>
