@@ -58,7 +58,7 @@ export default function CartScreen() {
   const [customerName, setCustomerName] = useState('');
   const [phone, setPhone] = useState('');
   const [detailedAddress, setDetailedAddress] = useState(''); // NEW: Separate field for street/landmark
-  const [town, setTown] = useState('Mtubatuba Town');
+  const [town, setTown] = useState(''); // ENHANCED: Start with empty string for placeholder
   const [paymentMethod, setPaymentMethod] = useState('Cash');
   const [promoCode, setPromoCode] = useState(''); // NEW: Promo code state
   const [promoDiscount, setPromoDiscount] = useState(0); // NEW: Promo discount amount
@@ -137,6 +137,9 @@ export default function CartScreen() {
 
   // MULTI-RESTAURANT FEATURE: Dynamic delivery fee calculation
   const getDeliveryFee = useCallback(() => {
+    // If no town selected, return 0
+    if (!town) return 0;
+    
     const baseFee = TOWN_DELIVERY_FEES[town as keyof typeof TOWN_DELIVERY_FEES] || 25;
     const restaurantCount = getRestaurantCount();
     
@@ -146,26 +149,52 @@ export default function CartScreen() {
     return baseFee + additionalFee;
   }, [town, getRestaurantCount]);
 
-  // NEW: Promo code application handler (placeholder for future AI integration)
+  // LUCIA15 PROMO CODE LOGIC: Apply 5% discount on delivery fee
   const handleApplyPromoCode = () => {
     if (!promoCode.trim()) {
       Alert.alert('Invalid Code', 'Please enter a promotion code');
       return;
     }
 
-    // PLACEHOLDER: This is where AI/server logic will be integrated
-    // For now, show a message that the feature is coming soon
-    Alert.alert(
-      'Feature Coming Soon',
-      'Promotion code validation will be available soon. This feature will be powered by AI to provide personalized discounts.',
-      [{ text: 'OK' }]
-    );
-    
-    // Example of how discount would be applied in the future:
-    // setPromoDiscount(calculatedDiscount);
-    // setPromoApplied(true);
-    
-    console.log('Promo code entered:', promoCode);
+    // Check if town is selected (required for delivery fee calculation)
+    if (!town) {
+      Alert.alert('Select Delivery Area', 'Please select your delivery area first to apply the promo code');
+      return;
+    }
+
+    // LUCIA15 PROMO CODE LOGIC: Check if code matches
+    if (promoCode.toUpperCase() === 'LUCIA15') {
+      const deliveryFee = getDeliveryFee();
+      
+      // Calculate 5% discount on delivery fee
+      const discount = deliveryFee * 0.05;
+      
+      setPromoDiscount(discount);
+      setPromoApplied(true);
+      
+      Alert.alert(
+        'Promo Code Applied! 🎉',
+        `You saved R${discount.toFixed(2)} (5% off delivery fee)`,
+        [{ text: 'Great!' }]
+      );
+      
+      console.log('LUCIA15 promo code applied:', {
+        deliveryFee,
+        discount,
+        discountPercentage: '5%'
+      });
+    } else {
+      // Invalid promo code
+      Alert.alert(
+        'Invalid Promo Code',
+        'The promo code you entered is not valid. Please check and try again.',
+        [{ text: 'OK' }]
+      );
+      
+      // Reset promo discount if invalid code is entered
+      setPromoDiscount(0);
+      setPromoApplied(false);
+    }
   };
 
   const handleCheckout = async () => {
@@ -176,6 +205,12 @@ export default function CartScreen() {
 
     if (!customerName.trim() || !phone.trim() || !detailedAddress.trim()) {
       Alert.alert('Missing Information', 'Please fill in all required fields including your detailed address');
+      return;
+    }
+
+    // ENHANCED: Check if delivery area is selected
+    if (!town) {
+      Alert.alert('Select Delivery Area', 'Please select your delivery area to continue');
       return;
     }
 
@@ -287,7 +322,7 @@ Delivery Fee (${town}): R${deliveryFee.toFixed(2)}`;
 
       if (promoDiscount > 0) {
         message += `
-Promo Discount: -R${promoDiscount.toFixed(2)}`;
+Promo Discount (LUCIA15): -R${promoDiscount.toFixed(2)}`;
       }
 
       message += `
@@ -574,18 +609,30 @@ Please confirm this order and provide estimated delivery time.`;
               }}>
                 Delivery Fee
               </Text>
-              <Text style={{ 
-                fontSize: 13,
-                color: colors.textLight,
-              }}>
-                {town} - Base: R{TOWN_DELIVERY_FEES[town as keyof typeof TOWN_DELIVERY_FEES] || 25}
-              </Text>
-              {restaurantCount > 1 && (
+              {town ? (
+                <>
+                  <Text style={{ 
+                    fontSize: 13,
+                    color: colors.textLight,
+                  }}>
+                    {town} - Base: R{TOWN_DELIVERY_FEES[town as keyof typeof TOWN_DELIVERY_FEES] || 25}
+                  </Text>
+                  {restaurantCount > 1 && (
+                    <Text style={{ 
+                      fontSize: 13,
+                      color: colors.textLight,
+                    }}>
+                      + R{(restaurantCount - 1) * 10} ({restaurantCount - 1} extra restaurant{restaurantCount > 2 ? 's' : ''})
+                    </Text>
+                  )}
+                </>
+              ) : (
                 <Text style={{ 
                   fontSize: 13,
                   color: colors.textLight,
+                  fontStyle: 'italic',
                 }}>
-                  + R{(restaurantCount - 1) * 10} ({restaurantCount - 1} extra restaurant{restaurantCount > 2 ? 's' : ''})
+                  Select delivery area below
                 </Text>
               )}
             </View>
@@ -681,7 +728,7 @@ Please confirm this order and provide estimated delivery time.`;
             placeholderTextColor={colors.textLight}
           />
           
-          {/* FEATURE 1A: Town/Area Dropdown with Fee Display */}
+          {/* FEATURE 1A: Town/Area Dropdown with Fee Display and Placeholder */}
           <Text style={{
             fontSize: 14,
             fontWeight: '600',
@@ -689,20 +736,26 @@ Please confirm this order and provide estimated delivery time.`;
             marginBottom: 8,
             marginTop: 8,
           }}>
-            Delivery Area
+            Delivery Area *
           </Text>
           <View style={{
             backgroundColor: colors.backgroundAlt,
             borderRadius: 12,
             marginBottom: 16,
             borderWidth: 1,
-            borderColor: colors.primary + '20',
+            borderColor: town ? colors.primary + '20' : colors.textLight + '40',
           }}>
             <Picker
               selectedValue={town}
               onValueChange={setTown}
-              style={{ color: colors.text }}
+              style={{ color: town ? colors.text : colors.textLight }}
             >
+              {/* ENHANCED: Placeholder option */}
+              <Picker.Item 
+                label="Select Delivery Area..." 
+                value="" 
+                color={colors.textLight}
+              />
               {Object.entries(TOWN_DELIVERY_FEES).map(([townName, fee]) => (
                 <Picker.Item 
                   key={townName}
@@ -720,7 +773,7 @@ Please confirm this order and provide estimated delivery time.`;
             color: colors.text,
             marginBottom: 8,
           }}>
-            Street Name or Landmark
+            Street Name or Landmark *
           </Text>
           <TextInput
             style={[commonStyles.input, { 
@@ -772,7 +825,7 @@ Please confirm this order and provide estimated delivery time.`;
           </View>
         </View>
 
-        {/* FEATURE 2: PROMOTION CODE INTEGRATION (AI-Ready Placeholder) */}
+        {/* FEATURE 2: LUCIA15 PROMOTION CODE - Fully Functional */}
         <View style={[commonStyles.card, { marginBottom: 20 }]}>
           <Text style={{
             fontSize: 18,
@@ -787,7 +840,7 @@ Please confirm this order and provide estimated delivery time.`;
             color: colors.textLight,
             marginBottom: 16,
           }}>
-            Have a promo code? Enter it below to receive your discount
+            Have a promo code? Enter it below to receive 5% off your delivery fee
           </Text>
           
           <View style={{ 
@@ -806,11 +859,12 @@ Please confirm this order and provide estimated delivery time.`;
               onChangeText={(text) => setPromoCode(text.toUpperCase())}
               placeholderTextColor={colors.textLight}
               autoCapitalize="characters"
+              editable={!promoApplied}
             />
             
             <TouchableOpacity
               style={{
-                backgroundColor: promoCode.trim() ? colors.primary : colors.backgroundAlt,
+                backgroundColor: promoCode.trim() && !promoApplied ? colors.primary : colors.backgroundAlt,
                 paddingHorizontal: 24,
                 paddingVertical: 14,
                 borderRadius: 12,
@@ -819,14 +873,14 @@ Please confirm this order and provide estimated delivery time.`;
                 justifyContent: 'center',
               }}
               onPress={handleApplyPromoCode}
-              disabled={!promoCode.trim()}
+              disabled={!promoCode.trim() || promoApplied}
             >
               <Text style={{ 
-                color: promoCode.trim() ? colors.white : colors.textLight, 
+                color: promoCode.trim() && !promoApplied ? colors.white : colors.textLight, 
                 fontWeight: '700',
                 fontSize: 15,
               }}>
-                Apply
+                {promoApplied ? 'Applied' : 'Apply'}
               </Text>
             </TouchableOpacity>
           </View>
