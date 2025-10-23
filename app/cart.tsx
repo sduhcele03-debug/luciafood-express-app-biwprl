@@ -57,9 +57,12 @@ export default function CartScreen() {
   
   const [customerName, setCustomerName] = useState('');
   const [phone, setPhone] = useState('');
-  const [address, setAddress] = useState('');
+  const [detailedAddress, setDetailedAddress] = useState(''); // NEW: Separate field for street/landmark
   const [town, setTown] = useState('Mtubatuba Town');
   const [paymentMethod, setPaymentMethod] = useState('Cash');
+  const [promoCode, setPromoCode] = useState(''); // NEW: Promo code state
+  const [promoDiscount, setPromoDiscount] = useState(0); // NEW: Promo discount amount
+  const [promoApplied, setPromoApplied] = useState(false); // NEW: Promo applied status
   const [loading, setLoading] = useState(false);
   const [restaurantNames, setRestaurantNames] = useState<{ [key: string]: string }>({});
 
@@ -84,7 +87,7 @@ export default function CartScreen() {
         console.log('CartScreen: Loaded user profile data');
         setCustomerName(data.full_name || '');
         setPhone(data.phone_number || '');
-        setAddress(data.address || '');
+        setDetailedAddress(data.address || '');
       }
     } catch (error) {
       console.error('CartScreen: Error loading user profile:', error);
@@ -143,14 +146,36 @@ export default function CartScreen() {
     return baseFee + additionalFee;
   }, [town, getRestaurantCount]);
 
+  // NEW: Promo code application handler (placeholder for future AI integration)
+  const handleApplyPromoCode = () => {
+    if (!promoCode.trim()) {
+      Alert.alert('Invalid Code', 'Please enter a promotion code');
+      return;
+    }
+
+    // PLACEHOLDER: This is where AI/server logic will be integrated
+    // For now, show a message that the feature is coming soon
+    Alert.alert(
+      'Feature Coming Soon',
+      'Promotion code validation will be available soon. This feature will be powered by AI to provide personalized discounts.',
+      [{ text: 'OK' }]
+    );
+    
+    // Example of how discount would be applied in the future:
+    // setPromoDiscount(calculatedDiscount);
+    // setPromoApplied(true);
+    
+    console.log('Promo code entered:', promoCode);
+  };
+
   const handleCheckout = async () => {
     if (cart.length === 0) {
       Alert.alert('Empty Cart', 'Please add items to your cart before checkout');
       return;
     }
 
-    if (!customerName.trim() || !phone.trim() || !address.trim()) {
-      Alert.alert('Missing Information', 'Please fill in all required fields');
+    if (!customerName.trim() || !phone.trim() || !detailedAddress.trim()) {
+      Alert.alert('Missing Information', 'Please fill in all required fields including your detailed address');
       return;
     }
 
@@ -167,10 +192,10 @@ export default function CartScreen() {
     setLoading(true);
 
     try {
-      // Calculate totals with multi-restaurant delivery fee
+      // Calculate totals with multi-restaurant delivery fee and promo discount
       const subtotal = getCartTotal();
       const deliveryFee = getDeliveryFee();
-      const total = subtotal + deliveryFee;
+      const total = subtotal + deliveryFee - promoDiscount;
 
       // Group items by restaurant for multi-restaurant invoice
       const groupedCart = getCartByRestaurant();
@@ -185,7 +210,7 @@ export default function CartScreen() {
         const orderData = {
           customer_name: customerName.trim(),
           phone: phone.trim(),
-          address: address.trim(),
+          address: `${detailedAddress.trim()}, ${town}`,
           town,
           restaurant_id: restaurantId,
           items: items.map(item => ({
@@ -196,8 +221,8 @@ export default function CartScreen() {
             total: (item.lucia_price || item.price) * item.quantity
           })),
           subtotal: restaurantSubtotal,
-          delivery_fee: restaurantCount === 1 ? deliveryFee : Math.round(deliveryFee / restaurantCount), // Split delivery fee
-          total: restaurantCount === 1 ? total : restaurantSubtotal + Math.round(deliveryFee / restaurantCount),
+          delivery_fee: restaurantCount === 1 ? deliveryFee : Math.round(deliveryFee / restaurantCount),
+          total: restaurantCount === 1 ? total : restaurantSubtotal + Math.round(deliveryFee / restaurantCount) - (promoDiscount / restaurantCount),
           payment_method: paymentMethod,
           status: 'pending'
         };
@@ -224,7 +249,7 @@ export default function CartScreen() {
 👤 *Customer Details:*
 Name: ${customerName}
 Phone: ${phone}
-Address: ${address}
+Address: ${detailedAddress}
 Town: ${town}
 
 `;
@@ -249,19 +274,24 @@ Town: ${town}
 `;
       }
 
-      // Add order summary
+      // Add order summary with new structure
       message += `💰 *Order Summary:*
-Subtotal: R${subtotal.toFixed(2)}
-Delivery Fee (${restaurantCount} restaurant${restaurantCount > 1 ? 's' : ''}): R${deliveryFee.toFixed(2)}`;
+Items Total: R${subtotal.toFixed(2)}
+Delivery Fee (${town}): R${deliveryFee.toFixed(2)}`;
 
       if (restaurantCount > 1) {
         message += `
-  Base fee (${town}): R${TOWN_DELIVERY_FEES[town as keyof typeof TOWN_DELIVERY_FEES] || 25}
-  Additional restaurants: R${(restaurantCount - 1) * 10}`;
+  Base fee: R${TOWN_DELIVERY_FEES[town as keyof typeof TOWN_DELIVERY_FEES] || 25}
+  Additional restaurants (${restaurantCount - 1}): R${(restaurantCount - 1) * 10}`;
+      }
+
+      if (promoDiscount > 0) {
+        message += `
+Promo Discount: -R${promoDiscount.toFixed(2)}`;
       }
 
       message += `
-*Total: R${total.toFixed(2)}*
+*Total to Pay: R${total.toFixed(2)}*
 
 💳 *Payment Method:* ${paymentMethod}
 
@@ -328,7 +358,7 @@ Please confirm this order and provide estimated delivery time.`;
 
   const subtotal = getCartTotal();
   const deliveryFee = getDeliveryFee();
-  const total = subtotal + deliveryFee;
+  const total = subtotal + deliveryFee - promoDiscount;
   const groupedCart = getCartByRestaurant();
   const restaurantCount = getRestaurantCount();
 
@@ -360,7 +390,7 @@ Please confirm this order and provide estimated delivery time.`;
               color: colors.text,
               marginBottom: 4,
             }}>
-              You're ordering from {restaurantCount} restaurants.
+              You&apos;re ordering from {restaurantCount} restaurants.
             </Text>
             <Text style={{
               fontSize: 14,
@@ -407,7 +437,6 @@ Please confirm this order and provide estimated delivery time.`;
                     }}>
                       {item.name}
                     </Text>
-                    {/* PRICE DISPLAY FIX: Only show lucia_price */}
                     <Text style={{
                       fontSize: 14,
                       color: colors.primary,
@@ -419,7 +448,6 @@ Please confirm this order and provide estimated delivery time.`;
                   </View>
                   
                   <View style={{ alignItems: 'center', flexDirection: 'row' }}>
-                    {/* CART QUANTITY CONTROLS: Enhanced quantity management */}
                     <TouchableOpacity
                       onPress={() => removeItem(item.id)}
                       style={{
@@ -492,39 +520,136 @@ Please confirm this order and provide estimated delivery time.`;
           );
         })}
 
-        {/* Order Summary */}
+        {/* FEATURE 3: REFACTORED ORDER SUMMARY - Clear Visual Distinction */}
         <View style={[commonStyles.card, { marginBottom: 20 }]}>
           <Text style={{
-            fontSize: 18,
+            fontSize: 20,
             fontWeight: '700',
             color: colors.text,
-            marginBottom: 16,
+            marginBottom: 20,
           }}>
-            Order Summary
+            💰 Order Summary
           </Text>
           
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
-            <Text style={{ color: colors.textLight }}>Subtotal</Text>
-            <Text style={{ color: colors.text, fontWeight: '600' }}>R{subtotal.toFixed(2)}</Text>
-          </View>
-          
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
-            <Text style={{ color: colors.textLight }}>
-              Delivery Fee ({town})
-              {restaurantCount > 1 && ` + ${restaurantCount - 1} extra restaurant${restaurantCount > 2 ? 's' : ''}`}
+          {/* Items Total */}
+          <View style={{ 
+            flexDirection: 'row', 
+            justifyContent: 'space-between', 
+            marginBottom: 12,
+            paddingBottom: 12,
+            borderBottomWidth: 1,
+            borderBottomColor: colors.backgroundAlt + '40',
+          }}>
+            <Text style={{ 
+              fontSize: 16,
+              color: colors.text,
+              fontWeight: '500',
+            }}>
+              Items Total
             </Text>
-            <Text style={{ color: colors.text, fontWeight: '600' }}>R{deliveryFee.toFixed(2)}</Text>
+            <Text style={{ 
+              fontSize: 16,
+              color: colors.text, 
+              fontWeight: '600',
+            }}>
+              R{subtotal.toFixed(2)}
+            </Text>
           </View>
           
+          {/* Delivery Fee - Shows town and breakdown */}
+          <View style={{ 
+            flexDirection: 'row', 
+            justifyContent: 'space-between', 
+            marginBottom: 12,
+            paddingBottom: 12,
+            borderBottomWidth: 1,
+            borderBottomColor: colors.backgroundAlt + '40',
+          }}>
+            <View style={{ flex: 1 }}>
+              <Text style={{ 
+                fontSize: 16,
+                color: colors.text,
+                fontWeight: '500',
+                marginBottom: 4,
+              }}>
+                Delivery Fee
+              </Text>
+              <Text style={{ 
+                fontSize: 13,
+                color: colors.textLight,
+              }}>
+                {town} - Base: R{TOWN_DELIVERY_FEES[town as keyof typeof TOWN_DELIVERY_FEES] || 25}
+              </Text>
+              {restaurantCount > 1 && (
+                <Text style={{ 
+                  fontSize: 13,
+                  color: colors.textLight,
+                }}>
+                  + R{(restaurantCount - 1) * 10} ({restaurantCount - 1} extra restaurant{restaurantCount > 2 ? 's' : ''})
+                </Text>
+              )}
+            </View>
+            <Text style={{ 
+              fontSize: 16,
+              color: colors.text, 
+              fontWeight: '600',
+            }}>
+              R{deliveryFee.toFixed(2)}
+            </Text>
+          </View>
+          
+          {/* Promo Discount - Only shown if applied */}
+          {promoDiscount > 0 && (
+            <View style={{ 
+              flexDirection: 'row', 
+              justifyContent: 'space-between', 
+              marginBottom: 12,
+              paddingBottom: 12,
+              borderBottomWidth: 1,
+              borderBottomColor: colors.backgroundAlt + '40',
+            }}>
+              <Text style={{ 
+                fontSize: 16,
+                color: colors.primary,
+                fontWeight: '500',
+              }}>
+                Promo Discount
+              </Text>
+              <Text style={{ 
+                fontSize: 16,
+                color: colors.primary, 
+                fontWeight: '600',
+              }}>
+                -R{promoDiscount.toFixed(2)}
+              </Text>
+            </View>
+          )}
+          
+          {/* Total to Pay - Prominent bottom line */}
           <View style={{
             flexDirection: 'row',
             justifyContent: 'space-between',
-            paddingTop: 8,
-            borderTopWidth: 1,
-            borderTopColor: colors.backgroundAlt,
+            paddingTop: 16,
+            paddingBottom: 8,
+            backgroundColor: colors.primary + '08',
+            marginHorizontal: -16,
+            paddingHorizontal: 16,
+            borderRadius: 12,
           }}>
-            <Text style={{ fontSize: 18, fontWeight: '700', color: colors.text }}>Total</Text>
-            <Text style={{ fontSize: 18, fontWeight: '700', color: colors.primary }}>R{total.toFixed(2)}</Text>
+            <Text style={{ 
+              fontSize: 20, 
+              fontWeight: '700', 
+              color: colors.text,
+            }}>
+              Total to Pay
+            </Text>
+            <Text style={{ 
+              fontSize: 22, 
+              fontWeight: '700', 
+              color: colors.primary,
+            }}>
+              R{total.toFixed(2)}
+            </Text>
           </View>
         </View>
 
@@ -536,7 +661,7 @@ Please confirm this order and provide estimated delivery time.`;
             color: colors.text,
             marginBottom: 16,
           }}>
-            Delivery Information
+            📍 Delivery Information
           </Text>
           
           <TextInput
@@ -556,29 +681,22 @@ Please confirm this order and provide estimated delivery time.`;
             placeholderTextColor={colors.textLight}
           />
           
-          <TextInput
-            style={commonStyles.input}
-            placeholder="Delivery Address"
-            value={address}
-            onChangeText={setAddress}
-            multiline
-            numberOfLines={3}
-            placeholderTextColor={colors.textLight}
-          />
-          
-          {/* FEATURE IMPLEMENTATION: Town dropdown with delivery fees */}
+          {/* FEATURE 1A: Town/Area Dropdown with Fee Display */}
           <Text style={{
             fontSize: 14,
             fontWeight: '600',
             color: colors.text,
             marginBottom: 8,
+            marginTop: 8,
           }}>
-            Select Town (Base Delivery Fee: R{TOWN_DELIVERY_FEES[town as keyof typeof TOWN_DELIVERY_FEES] || 25})
+            Delivery Area
           </Text>
           <View style={{
             backgroundColor: colors.backgroundAlt,
             borderRadius: 12,
             marginBottom: 16,
+            borderWidth: 1,
+            borderColor: colors.primary + '20',
           }}>
             <Picker
               selectedValue={town}
@@ -588,14 +706,46 @@ Please confirm this order and provide estimated delivery time.`;
               {Object.entries(TOWN_DELIVERY_FEES).map(([townName, fee]) => (
                 <Picker.Item 
                   key={townName}
-                  label={`${townName} (R${fee})`} 
+                  label={`${townName} - R${fee.toFixed(2)}`} 
                   value={townName} 
                 />
               ))}
             </Picker>
           </View>
           
-          {/* FEATURE IMPLEMENTATION: Payment method selection */}
+          {/* FEATURE 1B: Detailed Address Input (Street/Landmark) */}
+          <Text style={{
+            fontSize: 14,
+            fontWeight: '600',
+            color: colors.text,
+            marginBottom: 8,
+          }}>
+            Street Name or Landmark
+          </Text>
+          <TextInput
+            style={[commonStyles.input, { 
+              minHeight: 80,
+              textAlignVertical: 'top',
+              paddingTop: 12,
+            }]}
+            placeholder="e.g., 123 Main Street, near Pick n Pay"
+            value={detailedAddress}
+            onChangeText={setDetailedAddress}
+            multiline
+            numberOfLines={3}
+            placeholderTextColor={colors.textLight}
+          />
+          <Text style={{
+            fontSize: 12,
+            color: colors.textLight,
+            marginTop: -8,
+            marginBottom: 16,
+            fontStyle: 'italic',
+          }}>
+            This helps the driver find you easily
+          </Text>
+          
+          {/* Payment Method Selection */}
           <Text style={{
             fontSize: 14,
             fontWeight: '600',
@@ -608,26 +758,118 @@ Please confirm this order and provide estimated delivery time.`;
             backgroundColor: colors.backgroundAlt,
             borderRadius: 12,
             marginBottom: 16,
+            borderWidth: 1,
+            borderColor: colors.primary + '20',
           }}>
             <Picker
               selectedValue={paymentMethod}
               onValueChange={setPaymentMethod}
               style={{ color: colors.text }}
             >
-              <Picker.Item label="Cash" value="Cash" />
-              <Picker.Item label="EFT" value="EFT" />
+              <Picker.Item label="💵 Cash" value="Cash" />
+              <Picker.Item label="💳 EFT" value="EFT" />
             </Picker>
           </View>
         </View>
 
+        {/* FEATURE 2: PROMOTION CODE INTEGRATION (AI-Ready Placeholder) */}
+        <View style={[commonStyles.card, { marginBottom: 20 }]}>
+          <Text style={{
+            fontSize: 18,
+            fontWeight: '700',
+            color: colors.text,
+            marginBottom: 8,
+          }}>
+            🎁 Promotion Code
+          </Text>
+          <Text style={{
+            fontSize: 13,
+            color: colors.textLight,
+            marginBottom: 16,
+          }}>
+            Have a promo code? Enter it below to receive your discount
+          </Text>
+          
+          <View style={{ 
+            flexDirection: 'row', 
+            alignItems: 'center',
+            gap: 12,
+          }}>
+            <TextInput
+              style={[commonStyles.input, { 
+                flex: 1,
+                marginBottom: 0,
+                textTransform: 'uppercase',
+              }]}
+              placeholder="Enter promo code"
+              value={promoCode}
+              onChangeText={(text) => setPromoCode(text.toUpperCase())}
+              placeholderTextColor={colors.textLight}
+              autoCapitalize="characters"
+            />
+            
+            <TouchableOpacity
+              style={{
+                backgroundColor: promoCode.trim() ? colors.primary : colors.backgroundAlt,
+                paddingHorizontal: 24,
+                paddingVertical: 14,
+                borderRadius: 12,
+                minWidth: 100,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+              onPress={handleApplyPromoCode}
+              disabled={!promoCode.trim()}
+            >
+              <Text style={{ 
+                color: promoCode.trim() ? colors.white : colors.textLight, 
+                fontWeight: '700',
+                fontSize: 15,
+              }}>
+                Apply
+              </Text>
+            </TouchableOpacity>
+          </View>
+          
+          {promoApplied && (
+            <View style={{
+              marginTop: 12,
+              padding: 12,
+              backgroundColor: colors.primary + '10',
+              borderRadius: 8,
+              flexDirection: 'row',
+              alignItems: 'center',
+            }}>
+              <Icon name="checkmark-circle" size={20} color={colors.primary} />
+              <Text style={{
+                marginLeft: 8,
+                color: colors.primary,
+                fontWeight: '600',
+                fontSize: 14,
+              }}>
+                Promo code applied! You saved R{promoDiscount.toFixed(2)}
+              </Text>
+            </View>
+          )}
+        </View>
+
         {/* Checkout Button */}
         <TouchableOpacity
-          style={[buttonStyles.primary, { opacity: loading ? 0.6 : 1 }]}
+          style={[buttonStyles.primary, { 
+            opacity: loading ? 0.6 : 1,
+            marginBottom: 20,
+          }]}
           onPress={handleCheckout}
           disabled={loading}
         >
+          <Icon 
+            name="logo-whatsapp" 
+            size={20} 
+            color={colors.white} 
+            style={{ marginRight: 8 }} 
+          />
           <Text style={{ color: colors.white, fontWeight: '700', fontSize: 16 }}>
-            {loading ? 'Processing...' : `Checkout - R${total.toFixed(2)}`}
+            {loading ? 'Processing...' : `Checkout via WhatsApp - R${total.toFixed(2)}`}
           </Text>
         </TouchableOpacity>
       </ScrollView>
