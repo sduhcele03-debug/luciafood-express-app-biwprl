@@ -1,7 +1,9 @@
 
 import { Tabs, Redirect } from 'expo-router';
+import { View } from 'react-native';
 import { colors } from '../../styles/commonStyles';
 import Icon from '../../components/Icon';
+import LuciaAIIcon from '../../components/LuciaAI/LuciaAIIcon';
 import { Platform } from 'react-native';
 import { useAuth } from '../../contexts/AuthContext';
 import LoadingScreen from '../../components/LoadingScreen';
@@ -20,7 +22,25 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        headerShown: false,
+        headerShown: true,
+        headerStyle: {
+          backgroundColor: colors.white,
+          elevation: 4,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 4,
+        },
+        headerTitleStyle: {
+          fontSize: 20,
+          fontWeight: '700',
+          color: colors.text,
+        },
+        headerRight: () => (
+          <View style={{ marginRight: 0 }}>
+            <LuciaAIIcon />
+          </View>
+        ),
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.text,
         tabBarStyle: {
@@ -50,6 +70,7 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Home',
+          headerTitle: 'LuciaFood Express',
           tabBarIcon: ({ color, size }) => (
             <Icon name="home" size={size} color={color} />
           ),
@@ -59,6 +80,7 @@ export default function TabLayout() {
         name="restaurants"
         options={{
           title: 'Restaurants',
+          headerTitle: 'Restaurants',
           tabBarIcon: ({ color, size }) => (
             <Icon name="restaurant" size={size} color={color} />
           ),
@@ -68,6 +90,7 @@ export default function TabLayout() {
         name="services"
         options={{
           title: 'Services',
+          headerTitle: 'Services',
           tabBarIcon: ({ color, size }) => (
             <Icon name="briefcase" size={size} color={color} />
           ),
@@ -77,6 +100,7 @@ export default function TabLayout() {
         name="profile"
         options={{
           title: 'Profile',
+          headerTitle: 'Profile',
           tabBarIcon: ({ color, size }) => (
             <Icon name="person" size={size} color={color} />
           ),

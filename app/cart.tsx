@@ -5,6 +5,7 @@ import { FOOD_ORDER_CHECKOUT_NUMBER, generateWhatsAppUrl, openWhatsAppWithFallba
 import { useCart } from '../contexts/CartContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from '../components/Icon';
+import LuciaAIIcon from '../components/LuciaAI/LuciaAIIcon';
 import { router } from 'expo-router';
 import { commonStyles, colors, buttonStyles } from '../styles/commonStyles';
 import {
@@ -25,7 +26,6 @@ interface ProfileData {
   address: string;
 }
 
-// FEATURE IMPLEMENTATION: Town list and dynamic delivery fee calculation
 const TOWN_DELIVERY_FEES = {
   'Mtubatuba Town': 25,
   'Riverview': 25,
@@ -57,16 +57,15 @@ export default function CartScreen() {
   
   const [customerName, setCustomerName] = useState('');
   const [phone, setPhone] = useState('');
-  const [detailedAddress, setDetailedAddress] = useState(''); // NEW: Separate field for street/landmark
-  const [town, setTown] = useState(''); // ENHANCED: Start with empty string for placeholder
+  const [detailedAddress, setDetailedAddress] = useState('');
+  const [town, setTown] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('Cash');
-  const [promoCode, setPromoCode] = useState(''); // NEW: Promo code state
-  const [promoDiscount, setPromoDiscount] = useState(0); // NEW: Promo discount amount
-  const [promoApplied, setPromoApplied] = useState(false); // NEW: Promo applied status
+  const [promoCode, setPromoCode] = useState('');
+  const [promoDiscount, setPromoDiscount] = useState(0);
+  const [promoApplied, setPromoApplied] = useState(false);
   const [loading, setLoading] = useState(false);
   const [restaurantNames, setRestaurantNames] = useState<{ [key: string]: string }>({});
 
-  // CRITICAL FIX: Define loadUserProfile function BEFORE useEffect
   const loadUserProfile = useCallback(async () => {
     if (!user) return;
 
@@ -94,7 +93,6 @@ export default function CartScreen() {
     }
   }, [user]);
 
-  // Load restaurant names for multi-restaurant display
   const loadRestaurantNames = useCallback(async () => {
     const groupedCart = getCartByRestaurant();
     const restaurantIds = Object.keys(groupedCart);
@@ -135,38 +133,31 @@ export default function CartScreen() {
     });
   }, [loadRestaurantNames]);
 
-  // MULTI-RESTAURANT FEATURE: Dynamic delivery fee calculation
   const getDeliveryFee = useCallback(() => {
-    // If no town selected, return 0
     if (!town) return 0;
     
     const baseFee = TOWN_DELIVERY_FEES[town as keyof typeof TOWN_DELIVERY_FEES] || 25;
     const restaurantCount = getRestaurantCount();
     
-    // Base fee for first restaurant + R10 for each additional restaurant (up to 3)
     const additionalFee = Math.max(0, restaurantCount - 1) * 10;
     
     return baseFee + additionalFee;
   }, [town, getRestaurantCount]);
 
-  // LUCIA15 PROMO CODE LOGIC: Apply 5% discount on delivery fee
   const handleApplyPromoCode = () => {
     if (!promoCode.trim()) {
       Alert.alert('Invalid Code', 'Please enter a promotion code');
       return;
     }
 
-    // Check if town is selected (required for delivery fee calculation)
     if (!town) {
       Alert.alert('Select Delivery Area', 'Please select your delivery area first to apply the promo code');
       return;
     }
 
-    // LUCIA15 PROMO CODE LOGIC: Check if code matches
     if (promoCode.toUpperCase() === 'LUCIA15') {
       const deliveryFee = getDeliveryFee();
       
-      // Calculate 5% discount on delivery fee
       const discount = deliveryFee * 0.05;
       
       setPromoDiscount(discount);
@@ -184,14 +175,12 @@ export default function CartScreen() {
         discountPercentage: '5%'
       });
     } else {
-      // Invalid promo code
       Alert.alert(
         'Invalid Promo Code',
         'The promo code you entered is not valid. Please check and try again.',
         [{ text: 'OK' }]
       );
       
-      // Reset promo discount if invalid code is entered
       setPromoDiscount(0);
       setPromoApplied(false);
     }
@@ -208,7 +197,6 @@ export default function CartScreen() {
       return;
     }
 
-    // ENHANCED: Check if delivery area is selected
     if (!town) {
       Alert.alert('Select Delivery Area', 'Please select your delivery area to continue');
       return;
@@ -227,15 +215,12 @@ export default function CartScreen() {
     setLoading(true);
 
     try {
-      // Calculate totals with multi-restaurant delivery fee and promo discount
       const subtotal = getCartTotal();
       const deliveryFee = getDeliveryFee();
       const total = subtotal + deliveryFee - promoDiscount;
 
-      // Group items by restaurant for multi-restaurant invoice
       const groupedCart = getCartByRestaurant();
 
-      // Create order objects for each restaurant
       const orders = [];
       for (const [restaurantId, items] of Object.entries(groupedCart)) {
         const restaurantSubtotal = items.reduce((sum, item) => {
@@ -265,7 +250,6 @@ export default function CartScreen() {
         orders.push(orderData);
       }
 
-      // Save all orders to database
       for (const order of orders) {
         const { error: orderError } = await supabase
           .from('orders')
@@ -278,7 +262,6 @@ export default function CartScreen() {
         }
       }
 
-      // WHATSAPP CHECKOUT: Generate multi-restaurant invoice structure
       let message = `🍽️ *New Order from LuciaFood Express*
 
 👤 *Customer Details:*
@@ -289,7 +272,6 @@ Town: ${town}
 
 `;
 
-      // Add items grouped by restaurant
       for (const [restaurantId, items] of Object.entries(groupedCart)) {
         const restaurantName = restaurantNames[restaurantId] || 'Unknown Restaurant';
         const restaurantSubtotal = items.reduce((sum, item) => {
@@ -309,7 +291,6 @@ Town: ${town}
 `;
       }
 
-      // Add order summary with new structure
       message += `💰 *Order Summary:*
 Items Total: R${subtotal.toFixed(2)}
 Delivery Fee (${town}): R${deliveryFee.toFixed(2)}`;
@@ -332,14 +313,12 @@ Promo Discount (LUCIA15): -R${promoDiscount.toFixed(2)}`;
 
 Please confirm this order and provide estimated delivery time.`;
 
-      // WHATSAPP NUMBER VERIFICATION: Use updated number (0743844253)
       console.log('Opening WhatsApp with number:', FOOD_ORDER_CHECKOUT_NUMBER);
       console.log('WhatsApp message preview:', message);
       
       const success = await openWhatsAppWithFallback(FOOD_ORDER_CHECKOUT_NUMBER, message);
 
       if (success) {
-        // Clear cart and show success
         clearCart();
         Alert.alert(
           'Order Sent!',
@@ -363,6 +342,15 @@ Please confirm this order and provide estimated delivery time.`;
   if (cart.length === 0) {
     return (
       <SafeAreaView style={[commonStyles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <View style={{ 
+          position: 'absolute', 
+          top: 16, 
+          right: 16, 
+          zIndex: 10 
+        }}>
+          <LuciaAIIcon />
+        </View>
+        
         <Icon name="basket" size={80} color={colors.textLight} />
         <Text style={{
           fontSize: 24,
@@ -401,12 +389,20 @@ Please confirm this order and provide estimated delivery time.`;
 
   return (
     <SafeAreaView style={[commonStyles.container, { paddingBottom: 80 }]}>
+      <View style={{ 
+        position: 'absolute', 
+        top: 16, 
+        right: 16, 
+        zIndex: 10 
+      }}>
+        <LuciaAIIcon />
+      </View>
+      
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 20 }}>
         <Text style={[commonStyles.title, { marginBottom: 20 }]}>
           Your Cart
         </Text>
 
-        {/* Multi-Restaurant Warning */}
         {restaurantCount > 1 && (
           <View style={[commonStyles.card, { 
             marginBottom: 20, 
@@ -438,7 +434,6 @@ Please confirm this order and provide estimated delivery time.`;
           </View>
         )}
 
-        {/* Cart Items Grouped by Restaurant */}
         {Object.entries(groupedCart).map(([restaurantId, items]) => {
           const restaurantName = restaurantNames[restaurantId] || 'Loading...';
           const restaurantSubtotal = items.reduce((sum, item) => {
@@ -537,7 +532,6 @@ Please confirm this order and provide estimated delivery time.`;
                 </View>
               ))}
 
-              {/* Restaurant Subtotal */}
               <View style={{
                 flexDirection: 'row',
                 justifyContent: 'space-between',
@@ -557,7 +551,6 @@ Please confirm this order and provide estimated delivery time.`;
           );
         })}
 
-        {/* FEATURE 3: REFACTORED ORDER SUMMARY - Clear Visual Distinction */}
         <View style={[commonStyles.card, { marginBottom: 20 }]}>
           <Text style={{
             fontSize: 20,
@@ -568,7 +561,6 @@ Please confirm this order and provide estimated delivery time.`;
             💰 Order Summary
           </Text>
           
-          {/* Items Total */}
           <View style={{ 
             flexDirection: 'row', 
             justifyContent: 'space-between', 
@@ -593,7 +585,6 @@ Please confirm this order and provide estimated delivery time.`;
             </Text>
           </View>
           
-          {/* Delivery Fee - Shows town and breakdown */}
           <View style={{ 
             flexDirection: 'row', 
             justifyContent: 'space-between', 
@@ -647,7 +638,6 @@ Please confirm this order and provide estimated delivery time.`;
             </Text>
           </View>
           
-          {/* Promo Discount - Only shown if applied */}
           {promoDiscount > 0 && (
             <View style={{ 
               flexDirection: 'row', 
@@ -674,7 +664,6 @@ Please confirm this order and provide estimated delivery time.`;
             </View>
           )}
           
-          {/* Total to Pay - Prominent bottom line */}
           <View style={{
             flexDirection: 'row',
             justifyContent: 'space-between',
@@ -702,7 +691,6 @@ Please confirm this order and provide estimated delivery time.`;
           </View>
         </View>
 
-        {/* Customer Information */}
         <View style={[commonStyles.card, { marginBottom: 20 }]}>
           <Text style={{
             fontSize: 18,
@@ -730,7 +718,6 @@ Please confirm this order and provide estimated delivery time.`;
             placeholderTextColor={colors.textLight}
           />
           
-          {/* FEATURE 1A: Town/Area Dropdown with Fee Display and Placeholder */}
           <Text style={{
             fontSize: 14,
             fontWeight: '600',
@@ -752,7 +739,6 @@ Please confirm this order and provide estimated delivery time.`;
               onValueChange={setTown}
               style={{ color: town ? colors.text : colors.textLight }}
             >
-              {/* ENHANCED: Placeholder option */}
               <Picker.Item 
                 label="Select Delivery Area..." 
                 value="" 
@@ -768,7 +754,6 @@ Please confirm this order and provide estimated delivery time.`;
             </Picker>
           </View>
           
-          {/* FEATURE 1B: Detailed Address Input (Street/Landmark) */}
           <Text style={{
             fontSize: 14,
             fontWeight: '600',
@@ -800,7 +785,6 @@ Please confirm this order and provide estimated delivery time.`;
             This helps the driver find you easily
           </Text>
           
-          {/* Payment Method Selection */}
           <Text style={{
             fontSize: 14,
             fontWeight: '600',
@@ -827,7 +811,6 @@ Please confirm this order and provide estimated delivery time.`;
           </View>
         </View>
 
-        {/* FEATURE 2: LUCIA15 PROMOTION CODE - Fully Functional */}
         <View style={[commonStyles.card, { marginBottom: 20 }]}>
           <Text style={{
             fontSize: 18,
@@ -909,7 +892,6 @@ Please confirm this order and provide estimated delivery time.`;
           )}
         </View>
 
-        {/* Checkout Button */}
         <TouchableOpacity
           style={[buttonStyles.primary, { 
             opacity: loading ? 0.6 : 1,
