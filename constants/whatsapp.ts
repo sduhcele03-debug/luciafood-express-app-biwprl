@@ -8,9 +8,9 @@ import Constants from 'expo-constants';
 /**
  * WHATSAPP NUMBER VERIFICATION: Food Order Checkout Number
  * Used for: Final WhatsApp checkout when customers place food orders
- * CRITICAL: This is the correct number (0822116064) as specified in requirements
+ * UPDATED: Changed to 0743844253 as per latest requirements
  */
-export const FOOD_ORDER_CHECKOUT_NUMBER = '0822116064';
+export const FOOD_ORDER_CHECKOUT_NUMBER = '0743844253';
 
 /**
  * Local Trades Booking & Advertising Number  
@@ -26,14 +26,14 @@ export const ADVERTISING_NUMBER = '0787549186';
 
 /**
  * Generate WhatsApp deep link URL
- * @param phoneNumber - Phone number without country code (e.g., '0822116064')
+ * @param phoneNumber - Phone number without country code (e.g., '0743844253')
  * @param message - Message to pre-fill
  * @returns Complete WhatsApp URL
  */
 export const generateWhatsAppUrl = (phoneNumber: string, message: string): string => {
   const encodedMessage = encodeURIComponent(message);
   // WHATSAPP NUMBER VERIFICATION: Ensure correct format with country code
-  const formattedNumber = phoneNumber.startsWith('27') ? phoneNumber : `27${phoneNumber}`;
+  const formattedNumber = phoneNumber.startsWith('27') ? phoneNumber : `27${phoneNumber.replace(/^0/, '')}`;
   return `https://wa.me/${formattedNumber}?text=${encodedMessage}`;
 };
 
@@ -51,8 +51,10 @@ export const generateWhatsAppUrl = (phoneNumber: string, message: string): strin
 export const openWhatsAppWithFallback = async (phoneNumber: string, message: string): Promise<boolean> => {
   const encodedMessage = encodeURIComponent(message);
   
-  // WHATSAPP NUMBER VERIFICATION: Ensure correct format
-  const formattedNumber = phoneNumber.startsWith('27') ? phoneNumber : `27${phoneNumber}`;
+  // WHATSAPP NUMBER VERIFICATION: Ensure correct format (remove leading 0, add 27)
+  const formattedNumber = phoneNumber.startsWith('27') 
+    ? phoneNumber 
+    : `27${phoneNumber.replace(/^0/, '')}`;
   
   // Primary: Use Universal Link format (most reliable for all platforms)
   const universalUrl = `https://wa.me/${formattedNumber}?text=${encodedMessage}`;

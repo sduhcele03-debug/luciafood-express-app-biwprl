@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "luciafood-express-app-biwprl",
-    "slug": "luciafood-express-app-biwprl",
+    "name": "LuciaFood Express",
+    "slug": "LuciaFood Express",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/natively-dark.png",
@@ -43,5 +43,6 @@
     "extra": {
       "router": {}
     }
-  }
+  },
+  "scheme": "LuciaFood Express"
 }

@@ -332,8 +332,10 @@ Promo Discount (LUCIA15): -R${promoDiscount.toFixed(2)}`;
 
 Please confirm this order and provide estimated delivery time.`;
 
-      // WHATSAPP NUMBER VERIFICATION: Use correct number (0822116064)
+      // WHATSAPP NUMBER VERIFICATION: Use updated number (0743844253)
       console.log('Opening WhatsApp with number:', FOOD_ORDER_CHECKOUT_NUMBER);
+      console.log('WhatsApp message preview:', message);
+      
       const success = await openWhatsAppWithFallback(FOOD_ORDER_CHECKOUT_NUMBER, message);
 
       if (success) {
@@ -341,7 +343,7 @@ Please confirm this order and provide estimated delivery time.`;
         clearCart();
         Alert.alert(
           'Order Sent!',
-          'Your order has been sent via WhatsApp. You will receive confirmation shortly.',
+          'Your order has been sent via WhatsApp to 0743844253. You will receive confirmation shortly.',
           [
             {
               text: 'OK',
