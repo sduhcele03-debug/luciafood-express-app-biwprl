@@ -24,6 +24,7 @@ const restaurantLogos = {
   'Hungry Lion': require('../../assets/images/8af68d59-ba87-4566-9b1c-897d59d34f63.jpeg'),
   'Steers': require('../../assets/images/50beda68-6257-422c-94a0-312838d1cb22.jpeg'),
   'Pedros': require('../../assets/images/774fbac8-ee5d-4ba9-8de3-b634430b39e8.jpeg'),
+  "Buyie's Seafood House & Shisanyama": require('../../assets/images/7bd1ccfe-b92e-4d15-87f2-c4308657db6f.jpeg'),
 };
 
 interface MenuItemWithRestaurant extends MenuItem {
