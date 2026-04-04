@@ -39,6 +39,7 @@ export interface MenuItem {
   category: string;
   name: string;
   price: number;
+  base_price?: number;
   original_price?: number;
   lucia_price?: number;
   image_url?: string;

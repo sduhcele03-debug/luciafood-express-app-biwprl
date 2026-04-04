@@ -1,5 +1,6 @@
 
-import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
+import { supabase } from '../lib/supabase';
 
 // ─── Delivery Zone Data ───────────────────────────────────────────────────────
 
@@ -17,6 +18,7 @@ export const DELIVERY_ZONES = [
 
 export type DeliveryZone = typeof DELIVERY_ZONES[number];
 
+// Fallback static fees used until Supabase data loads
 export const RESTAURANT_DELIVERY_FEES: Record<string, Record<string, number>> = {
   DEFAULT_TOWN_BASE: {
     'Nordale': 30,
@@ -42,13 +44,57 @@ export const RESTAURANT_DELIVERY_FEES: Record<string, Record<string, number>> = 
   },
 };
 
-function getDeliveryFee(restaurantName: string, zone: string): number | undefined {
+// ─── Supabase delivery_fees cache ─────────────────────────────────────────────
+// Map: restaurantId -> zone_name -> fee
+type DeliveryFeesCache = Record<string, Record<string, number>>;
+let deliveryFeesCache: DeliveryFeesCache = {};
+let deliveryFeesCacheLoaded = false;
+
+async function loadDeliveryFeesCache(): Promise<void> {
+  if (deliveryFeesCacheLoaded) return;
+  try {
+    console.log('[CartContext] Loading delivery_fees from Supabase...');
+    const { data, error } = await supabase
+      .from('delivery_fees')
+      .select('restaurant_id, zone_name, fee');
+    if (error) {
+      console.warn('[CartContext] Could not load delivery_fees:', error.message);
+      return;
+    }
+    const cache: DeliveryFeesCache = {};
+    for (const row of data || []) {
+      if (!cache[row.restaurant_id]) cache[row.restaurant_id] = {};
+      cache[row.restaurant_id][row.zone_name] = Number(row.fee);
+    }
+    deliveryFeesCache = cache;
+    deliveryFeesCacheLoaded = true;
+    console.log(`[CartContext] Loaded delivery_fees for ${Object.keys(cache).length} restaurants`);
+  } catch (err) {
+    console.warn('[CartContext] Unexpected error loading delivery_fees:', err);
+  }
+}
+
+function getDeliveryFeeFromCache(restaurantId: string, zone: string): number | undefined {
+  const restaurantFees = deliveryFeesCache[restaurantId];
+  if (restaurantFees && restaurantFees[zone] !== undefined) {
+    return restaurantFees[zone];
+  }
+  return undefined;
+}
+
+function getDeliveryFeeFallback(restaurantName: string, zone: string): number | undefined {
   const name = restaurantName.toLowerCase();
   const table =
     name.includes('buyie') || name.includes('breeze')
       ? RESTAURANT_DELIVERY_FEES.BUYIES_BASE
       : RESTAURANT_DELIVERY_FEES.DEFAULT_TOWN_BASE;
   return table[zone];
+}
+
+function getDeliveryFee(restaurantId: string, restaurantName: string, zone: string): number | undefined {
+  const cached = getDeliveryFeeFromCache(restaurantId, zone);
+  if (cached !== undefined) return cached;
+  return getDeliveryFeeFallback(restaurantName, zone);
 }
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -128,6 +174,13 @@ export function useCart() {
 export function CartProvider({ children }: { children: ReactNode }) {
   const [cart, setCart] = useState<CartState>(INITIAL_CART);
 
+  // Load delivery fees from Supabase on mount
+  useEffect(() => {
+    loadDeliveryFeesCache().catch(err => {
+      console.warn('[CartContext] Failed to load delivery fees cache:', err);
+    });
+  }, []);
+
   const addItem = useCallback(
     (
       restaurantId: string,
@@ -169,7 +222,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
         // Check zone support (only if a zone is selected)
         if (prev.selectedZone) {
-          const fee = getDeliveryFee(restaurantName, prev.selectedZone);
+          const fee = getDeliveryFee(restaurantId, restaurantName, prev.selectedZone);
           if (fee === undefined) {
             console.log(`[Cart] addItem blocked: restaurant does not deliver to ${prev.selectedZone}`);
             result = {
@@ -264,7 +317,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     console.log(`[Cart] setDeliveryZone: "${zone}"`);
     setCart(prev => {
       const updatedRestaurants = prev.restaurants.map(r => {
-        const fee = getDeliveryFee(r.restaurantName, zone);
+        const fee = getDeliveryFee(r.restaurantId, r.restaurantName, zone);
         return { ...r, deliveryFee: fee ?? 0 };
       });
       return { ...prev, selectedZone: zone, restaurants: updatedRestaurants };

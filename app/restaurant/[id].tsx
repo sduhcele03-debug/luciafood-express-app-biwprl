@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Image,
+  ImageSourcePropType,
   ActivityIndicator,
   Alert,
 } from 'react-native';
@@ -16,6 +17,22 @@ import { useCart } from '../../contexts/CartContext';
 import { supabase, Restaurant, MenuItem, sortMenuItemsByCategory, getMenuItems } from '../../lib/supabase';
 import { commonStyles, colors, buttonStyles } from '../../styles/commonStyles';
 import Icon from '../../components/Icon';
+
+// ─── Local asset map for menu item images ────────────────────────────────────
+const localImageMap: Record<string, any> = {
+  '/assets/images/a8ffa169-40c1-4b5f-bb3a-54889b8b3ae9.jpeg': require('../../assets/images/a8ffa169-40c1-4b5f-bb3a-54889b8b3ae9.jpeg'),
+  '/assets/images/f79b2610-cf2d-4906-96fe-3f78ae9e8470.jpeg': require('../../assets/images/f79b2610-cf2d-4906-96fe-3f78ae9e8470.jpeg'),
+  '/assets/images/731a3c9c-1610-4eb0-899b-6fd1e06c2a07.jpeg': require('../../assets/images/731a3c9c-1610-4eb0-899b-6fd1e06c2a07.jpeg'),
+  '/assets/images/9092f282-747d-4ca6-97d5-970856c98296.jpeg': require('../../assets/images/9092f282-747d-4ca6-97d5-970856c98296.jpeg'),
+  '/assets/images/0ced4dbb-d21b-4642-a5f0-1c1aae5e4cb9.jpeg': require('../../assets/images/0ced4dbb-d21b-4642-a5f0-1c1aae5e4cb9.jpeg'),
+};
+
+function getImageSource(url?: string): ImageSourcePropType {
+  if (!url) return require('../../assets/images/d7f42a0a-5ef2-4a49-861b-adbd16c8aad5.jpeg');
+  if (localImageMap[url]) return localImageMap[url];
+  if (url.startsWith('http')) return { uri: url };
+  return require('../../assets/images/d7f42a0a-5ef2-4a49-861b-adbd16c8aad5.jpeg');
+}
 
 export default function RestaurantScreen() {
   const { id } = useLocalSearchParams();
@@ -137,14 +154,16 @@ export default function RestaurantScreen() {
 
   const renderMenuItem = useCallback((item: MenuItem) => {
     const cartCount = getItemQuantity(item.id);
-    const displayPrice = Number(item.lucia_price || item.price).toFixed(2);
+    const rawPrice = item.lucia_price ?? item.base_price ?? item.price;
+    const displayPrice = Number(rawPrice).toFixed(2);
+    const imageSource = getImageSource(item.image_url);
 
     return (
       <View key={item.id} style={[commonStyles.card, { marginBottom: 16 }]}>
         <View style={{ flexDirection: 'row' }}>
-          {item.image_url && restaurant?.name !== 'Spur' && (
+          {restaurant?.name !== 'Spur' && (
             <Image
-              source={{ uri: item.image_url }}
+              source={imageSource}
               style={{ width: 100, height: 100, borderRadius: 12, marginRight: 16 }}
               resizeMode="cover"
               onError={() => {

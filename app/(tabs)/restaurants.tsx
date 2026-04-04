@@ -15,8 +15,9 @@ import { supabase, Restaurant, MenuItem, getRestaurantsByTag, getMenuItemsByCate
 import { commonStyles, colors } from '../../styles/commonStyles';
 import Icon from '../../components/Icon';
 
-// Local asset map for menu item images
-const menuItemImages: Record<string, any> = {
+// ─── Local asset map for ALL known local images ───────────────────────────────
+const localImageMap: Record<string, any> = {
+  // legacy paths (no leading slash)
   'assets/images/5a773d94-6eac-46eb-9131-67e13b4bd790.jpeg': require('../../assets/images/5a773d94-6eac-46eb-9131-67e13b4bd790.jpeg'),
   'assets/images/870cf82a-9b08-4ec7-ae3c-20ebc54ee907.jpeg': require('../../assets/images/870cf82a-9b08-4ec7-ae3c-20ebc54ee907.jpeg'),
   'assets/images/179ba54f-fb00-4786-bbea-ea95a937ea73.jpeg': require('../../assets/images/179ba54f-fb00-4786-bbea-ea95a937ea73.jpeg'),
@@ -27,25 +28,32 @@ const menuItemImages: Record<string, any> = {
   'assets/images/af29a256-73fa-4eec-a3b4-b7b0aaf65602.jpeg': require('../../assets/images/af29a256-73fa-4eec-a3b4-b7b0aaf65602.jpeg'),
   'assets/images/d6f25daa-205d-4bec-9073-8e7b70d81142.jpeg': require('../../assets/images/d6f25daa-205d-4bec-9073-8e7b70d81142.jpeg'),
   'assets/images/08b755c1-b7a8-4339-89ab-649bca67458a.jpeg': require('../../assets/images/08b755c1-b7a8-4339-89ab-649bca67458a.jpeg'),
+  // new Buyie's images (with leading slash, as stored in Supabase)
+  '/assets/images/a8ffa169-40c1-4b5f-bb3a-54889b8b3ae9.jpeg': require('../../assets/images/a8ffa169-40c1-4b5f-bb3a-54889b8b3ae9.jpeg'),
+  '/assets/images/f79b2610-cf2d-4906-96fe-3f78ae9e8470.jpeg': require('../../assets/images/f79b2610-cf2d-4906-96fe-3f78ae9e8470.jpeg'),
+  '/assets/images/731a3c9c-1610-4eb0-899b-6fd1e06c2a07.jpeg': require('../../assets/images/731a3c9c-1610-4eb0-899b-6fd1e06c2a07.jpeg'),
+  '/assets/images/9092f282-747d-4ca6-97d5-970856c98296.jpeg': require('../../assets/images/9092f282-747d-4ca6-97d5-970856c98296.jpeg'),
+  '/assets/images/0ced4dbb-d21b-4642-a5f0-1c1aae5e4cb9.jpeg': require('../../assets/images/0ced4dbb-d21b-4642-a5f0-1c1aae5e4cb9.jpeg'),
 };
 
-const getMenuItemImage = (imageUrl?: string): any => {
-  if (!imageUrl) return null;
-  if (menuItemImages[imageUrl]) return menuItemImages[imageUrl];
-  if (imageUrl.startsWith('http')) return { uri: imageUrl };
-  return null;
-};
+const FALLBACK_IMAGE = require('../../assets/images/d7f42a0a-5ef2-4a49-861b-adbd16c8aad5.jpeg');
 
-// Import restaurant logos including new ones - PEDROS INTEGRATION
-const restaurantLogos = {
+function getImageSource(url?: string): any {
+  if (!url) return FALLBACK_IMAGE;
+  if (localImageMap[url]) return localImageMap[url];
+  if (url.startsWith('http')) return { uri: url };
+  return FALLBACK_IMAGE;
+}
+
+// ─── Restaurant logos (hardcoded by name; Buyie's falls back to logo_url) ────
+const restaurantLogos: Record<string, any> = {
   'KFC': require('../../assets/images/ea004ca1-a296-4e39-984b-2089e42444f5.jpeg'),
-  'Galito\'s Chicken': require('../../assets/images/f3b869c8-2861-4512-997d-1c12896caf88.jpeg'),
-  'Nando\'s': require('../../assets/images/23f5887f-3eee-46c9-a4fe-38bc1310eb7a.jpeg'),
+  "Galito's Chicken": require('../../assets/images/f3b869c8-2861-4512-997d-1c12896caf88.jpeg'),
+  "Nando's": require('../../assets/images/23f5887f-3eee-46c9-a4fe-38bc1310eb7a.jpeg'),
   'Spur': require('../../assets/images/a49cf35b-b89b-413e-8d90-f264b2fd9558.jpeg'),
   'Hungry Lion': require('../../assets/images/8af68d59-ba87-4566-9b1c-897d59d34f63.jpeg'),
   'Steers': require('../../assets/images/50beda68-6257-422c-94a0-312838d1cb22.jpeg'),
   'Pedros': require('../../assets/images/774fbac8-ee5d-4ba9-8de3-b634430b39e8.jpeg'),
-  "Buyie's Seafood House & Shisanyama": require('../../assets/images/d7f42a0a-5ef2-4a49-861b-adbd16c8aad5.jpeg'),
 };
 
 interface MenuItemWithRestaurant extends MenuItem {
@@ -235,18 +243,20 @@ export default function RestaurantsScreen() {
     }
   };
 
-  const renderRestaurant = (restaurant: Restaurant) => (
+  const renderRestaurant = (restaurant: Restaurant) => {
+    const logoSource = restaurantLogos[restaurant.name] || getImageSource(restaurant.logo_url || restaurant.image);
+    return (
     <TouchableOpacity
       key={restaurant.id}
       style={[commonStyles.restaurantCard, { marginBottom: 16 }]}
-      onPress={() => router.push(`/restaurant/${restaurant.id}`)}
+      onPress={() => {
+        console.log('[RestaurantsScreen] Restaurant pressed:', restaurant.name);
+        router.push(`/restaurant/${restaurant.id}`);
+      }}
     >
       <View style={{ flexDirection: 'row' }}>
         <Image
-          source={
-            restaurantLogos[restaurant.name as keyof typeof restaurantLogos] ||
-            { uri: restaurant.logo_url || restaurant.image || 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=100&h=100&fit=crop' }
-          }
+          source={logoSource}
           style={{
             width: 80,
             height: 80,
@@ -334,27 +344,29 @@ export default function RestaurantsScreen() {
         </View>
       </View>
     </TouchableOpacity>
-  );
+    );
+  };
 
   // MENU FILTERING FEATURE: Render menu item with only lucia_price
-  const renderMenuItem = (item: MenuItemWithRestaurant) => (
+  const renderMenuItem = (item: MenuItemWithRestaurant) => {
+    const menuImageSource = getImageSource(item.image_url);
+    const rawPrice = item.lucia_price ?? item.price;
+    const priceDisplay = Number(rawPrice).toFixed(2);
+    return (
     <TouchableOpacity
       key={item.id}
       style={[commonStyles.card, { marginBottom: 16 }]}
-      onPress={() => router.push(`/restaurant/${item.restaurant_id}`)}
+      onPress={() => {
+        console.log('[RestaurantsScreen] Menu item pressed:', item.name);
+        router.push(`/restaurant/${item.restaurant_id}`);
+      }}
     >
       <View style={{ flexDirection: 'row' }}>
-        {item.image_url && getMenuItemImage(item.image_url) ? (
-          <Image
-            source={getMenuItemImage(item.image_url)}
-            style={{ width: 80, height: 80, borderRadius: 12, marginRight: 16 }}
-            resizeMode="cover"
-          />
-        ) : (
-          <View style={{ width: 80, height: 80, borderRadius: 12, marginRight: 16, backgroundColor: '#f0f0f0', alignItems: 'center', justifyContent: 'center' }}>
-            <Icon name="fast-food-outline" size={32} color="#ccc" />
-          </View>
-        )}
+        <Image
+          source={menuImageSource}
+          style={{ width: 80, height: 80, borderRadius: 12, marginRight: 16 }}
+          resizeMode="cover"
+        />
         <View style={{ flex: 1 }}>
           <Text style={{
             fontSize: 16,
@@ -380,19 +392,19 @@ export default function RestaurantsScreen() {
             {item.category}
           </Text>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-            {/* PRICE DISPLAY CLEANUP: Only show lucia_price */}
             <Text style={{
               fontSize: 18,
               fontWeight: '700',
               color: colors.primary,
             }}>
-              R{(item.lucia_price || item.price).toFixed(2)}
+              R{priceDisplay}
             </Text>
           </View>
         </View>
       </View>
     </TouchableOpacity>
-  );
+    );
+  };
 
   return (
     <SafeAreaView style={[commonStyles.container, { paddingBottom: 80 }]}>
