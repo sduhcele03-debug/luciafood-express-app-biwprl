@@ -37,7 +37,7 @@ function getImageSource(url?: string): ImageSourcePropType {
 export default function RestaurantScreen() {
   const { id } = useLocalSearchParams();
   const { user } = useAuth();
-  const { addItem, getItemQuantity, getCartItemCount, getRestaurantCount, getRestaurantIds } = useCart();
+  const { cart, addItem, getItemQuantity, getCartItemCount, getRestaurantCount, getRestaurantIds } = useCart();
 
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
@@ -108,13 +108,7 @@ export default function RestaurantScreen() {
   }, [loadRestaurantData]);
 
   const handleAddToCart = useCallback((item: MenuItem) => {
-    if (!user) {
-      Alert.alert('Sign In Required', 'Please sign in to add items to cart', [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Sign In', onPress: () => router.push('/signin') },
-      ]);
-      return;
-    }
+    console.log("✅ Adding to cart:", item);
 
     if (!restaurant) return;
 
@@ -142,16 +136,10 @@ export default function RestaurantScreen() {
   }, [user, restaurant, addItem]);
 
   const handleCheckout = useCallback(() => {
-    if (!user) {
-      Alert.alert('Sign In Required', 'Please sign in to proceed to checkout', [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Sign In', onPress: () => router.push('/signin') },
-      ]);
-      return;
-    }
+    console.log("✅ Checkout clicked - cart items:", cart);
     console.log('[RestaurantScreen] Navigating to cart');
     router.push('/cart');
-  }, [user]);
+  }, [cart]);
 
   const renderMenuItem = useCallback((item: MenuItem) => {
     const cartCount = getItemQuantity(item.id);
