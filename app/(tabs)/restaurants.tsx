@@ -15,32 +15,10 @@ import { supabase, Restaurant, MenuItem, getRestaurantsByTag, getMenuItemsByCate
 import { commonStyles, colors } from '../../styles/commonStyles';
 import Icon from '../../components/Icon';
 
-// ─── Local asset map for ALL known local images ───────────────────────────────
-const localImageMap: Record<string, any> = {
-  // legacy paths (no leading slash)
-  'assets/images/5a773d94-6eac-46eb-9131-67e13b4bd790.jpeg': require('../../assets/images/5a773d94-6eac-46eb-9131-67e13b4bd790.jpeg'),
-  'assets/images/870cf82a-9b08-4ec7-ae3c-20ebc54ee907.jpeg': require('../../assets/images/870cf82a-9b08-4ec7-ae3c-20ebc54ee907.jpeg'),
-  'assets/images/179ba54f-fb00-4786-bbea-ea95a937ea73.jpeg': require('../../assets/images/179ba54f-fb00-4786-bbea-ea95a937ea73.jpeg'),
-  'assets/images/6a64706e-53fc-483a-83f4-fdb11d4b4cf1.jpeg': require('../../assets/images/6a64706e-53fc-483a-83f4-fdb11d4b4cf1.jpeg'),
-  'assets/images/d7f42a0a-5ef2-4a49-861b-adbd16c8aad5.jpeg': require('../../assets/images/d7f42a0a-5ef2-4a49-861b-adbd16c8aad5.jpeg'),
-  'assets/images/7bd1ccfe-b92e-4d15-87f2-c4308657db6f.jpeg': require('../../assets/images/7bd1ccfe-b92e-4d15-87f2-c4308657db6f.jpeg'),
-  'assets/images/879efcac-5dc3-4994-b7cb-7a1a819cd8e1.jpeg': require('../../assets/images/879efcac-5dc3-4994-b7cb-7a1a819cd8e1.jpeg'),
-  'assets/images/af29a256-73fa-4eec-a3b4-b7b0aaf65602.jpeg': require('../../assets/images/af29a256-73fa-4eec-a3b4-b7b0aaf65602.jpeg'),
-  'assets/images/d6f25daa-205d-4bec-9073-8e7b70d81142.jpeg': require('../../assets/images/d6f25daa-205d-4bec-9073-8e7b70d81142.jpeg'),
-  'assets/images/08b755c1-b7a8-4339-89ab-649bca67458a.jpeg': require('../../assets/images/08b755c1-b7a8-4339-89ab-649bca67458a.jpeg'),
-  // new Buyie's images (with leading slash, as stored in Supabase)
-  '/assets/images/a8ffa169-40c1-4b5f-bb3a-54889b8b3ae9.jpeg': require('../../assets/images/a8ffa169-40c1-4b5f-bb3a-54889b8b3ae9.jpeg'),
-  '/assets/images/f79b2610-cf2d-4906-96fe-3f78ae9e8470.jpeg': require('../../assets/images/f79b2610-cf2d-4906-96fe-3f78ae9e8470.jpeg'),
-  '/assets/images/731a3c9c-1610-4eb0-899b-6fd1e06c2a07.jpeg': require('../../assets/images/731a3c9c-1610-4eb0-899b-6fd1e06c2a07.jpeg'),
-  '/assets/images/9092f282-747d-4ca6-97d5-970856c98296.jpeg': require('../../assets/images/9092f282-747d-4ca6-97d5-970856c98296.jpeg'),
-  '/assets/images/0ced4dbb-d21b-4642-a5f0-1c1aae5e4cb9.jpeg': require('../../assets/images/0ced4dbb-d21b-4642-a5f0-1c1aae5e4cb9.jpeg'),
-};
-
 const FALLBACK_IMAGE = require('../../assets/images/d7f42a0a-5ef2-4a49-861b-adbd16c8aad5.jpeg');
 
 function getImageSource(url?: string): any {
   if (!url) return FALLBACK_IMAGE;
-  if (localImageMap[url]) return localImageMap[url];
   if (url.startsWith('http')) return { uri: url };
   return FALLBACK_IMAGE;
 }

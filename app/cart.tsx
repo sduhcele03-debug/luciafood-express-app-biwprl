@@ -34,6 +34,7 @@ export default function CartScreen() {
   } = useCart();
 
   const [paymentMethod, setPaymentMethod] = useState('Cash');
+  const [specialNote, setSpecialNote] = useState('');
   const [promoCode, setPromoCode] = useState('');
   const [promoDiscount, setPromoDiscount] = useState(0);
   const [promoApplied, setPromoApplied] = useState(false);
@@ -166,8 +167,8 @@ export default function CartScreen() {
     }
 
     console.log('[CartScreen] Validation passed, navigating to checkout');
-    router.push('/checkout');
-  }, [cart, localName, localPhone, localAddress]);
+    router.push({ pathname: '/checkout', params: { specialNote, paymentMethod } });
+  }, [cart, localName, localPhone, localAddress, specialNote, paymentMethod]);
 
   // ── Empty state ─────────────────────────────────────────────────────────────
 
@@ -540,6 +541,25 @@ export default function CartScreen() {
               </Text>
             </View>
           )}
+        </View>
+
+        {/* ── Special Note ───────────────────────────────────────────────── */}
+        <View style={[commonStyles.card, { marginBottom: 20 }]}>
+          <Text style={{ fontSize: 18, fontWeight: '700', color: colors.text, marginBottom: 8 }}>
+            📝 Special Note (Optional)
+          </Text>
+          <TextInput
+            style={[commonStyles.input, { minHeight: 80, textAlignVertical: 'top', paddingTop: 12 }]}
+            placeholder="Add instructions for restaurant or driver..."
+            value={specialNote}
+            onChangeText={(text) => {
+              console.log('[CartScreen] Special note updated');
+              setSpecialNote(text);
+            }}
+            multiline
+            numberOfLines={3}
+            placeholderTextColor={colors.textLight}
+          />
         </View>
 
         {/* ── Checkout Button ────────────────────────────────────────────── */}

@@ -5,10 +5,10 @@ import {
   View,
   TouchableOpacity,
   ScrollView,
-  Alert,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useCart } from '../contexts/CartContext';
 import { commonStyles, colors, buttonStyles } from '../styles/commonStyles';
 import Icon from '../components/Icon';
@@ -22,6 +22,7 @@ export default function CheckoutScreen() {
     getGrandTotal,
   } = useCart();
 
+  const { specialNote, paymentMethod } = useLocalSearchParams<{ specialNote?: string; paymentMethod?: string }>();
   const [placing, setPlacing] = useState(false);
 
   const subtotal = getSubtotal();
@@ -32,24 +33,60 @@ export default function CheckoutScreen() {
   const totalDeliveryDisplay = Number(totalDelivery).toFixed(2);
   const grandTotalDisplay = Number(grandTotal).toFixed(2);
 
-  const handlePlaceOrder = () => {
+  const handlePlaceOrder = async () => {
     console.log('[CheckoutScreen] Place Order button pressed');
     setPlacing(true);
-    Alert.alert(
-      'Order Placed!',
-      `We'll contact you shortly on ${cart.userDetails.phone}`,
-      [
-        {
-          text: 'OK',
-          onPress: () => {
-            console.log('[CheckoutScreen] Order confirmed, clearing cart and navigating home');
-            clearCart();
-            router.replace('/(tabs)/');
-          },
-        },
-      ]
-    );
+
+    const restaurantBlocks = cart.restaurants.map(restaurant => {
+      const restaurantSubtotal = restaurant.items.reduce(
+        (sum, item) => sum + (item.lucia_price ?? item.price) * item.quantity,
+        0
+      );
+      const itemLines = restaurant.items
+        .map(item => {
+          const price = item.lucia_price ?? item.price;
+          return `${item.quantity} x ${item.name} - R${Number(price).toFixed(2)}`;
+        })
+        .join('\n');
+      return `🏪 ${restaurant.restaurantName}:\n${itemLines}\nSubtotal: R${Number(restaurantSubtotal).toFixed(2)}`;
+    }).join('\n\n');
+
+    const noteText = specialNote && specialNote.trim() ? specialNote.trim() : 'None';
+
+    const message =
+`🍽️ New Order from LuciaFood Express
+
+👤 Customer Details:
+Name: ${cart.userDetails.name}
+Phone: ${cart.userDetails.phone}
+Address: ${cart.userDetails.address}
+Town: ${cart.selectedZone}
+
+${restaurantBlocks}
+
+💰 Order Summary:
+Items Total: R${subtotalDisplay}
+Delivery Fee (${cart.selectedZone}): R${totalDeliveryDisplay}
+Total to Pay: R${grandTotalDisplay}
+
+💳 Payment Method: ${paymentMethod || 'Cash'}
+
+📝 Special Note:
+${noteText}
+
+Please confirm this order and provide estimated delivery time.`;
+
+    console.log('✅ WhatsApp message generated');
+
+    const encoded = encodeURIComponent(message);
+    const url = `https://wa.me/27743844253?text=${encoded}`;
+
+    console.log('[CheckoutScreen] Opening WhatsApp URL');
+    await Linking.openURL(url);
+
     setPlacing(false);
+    clearCart();
+    router.replace('/(tabs)/');
   };
 
   return (
@@ -131,7 +168,7 @@ export default function CheckoutScreen() {
         {/* Items grouped by restaurant */}
         {cart.restaurants.map(restaurant => {
           const restaurantSubtotal = restaurant.items.reduce(
-            (sum, item) => sum + item.price * item.quantity,
+            (sum, item) => sum + (item.lucia_price ?? item.price) * item.quantity,
             0
           );
           const restaurantSubtotalDisplay = Number(restaurantSubtotal).toFixed(2);
@@ -144,9 +181,10 @@ export default function CheckoutScreen() {
               </Text>
 
               {restaurant.items.map(item => {
-                const itemTotal = item.price * item.quantity;
+                const effectivePrice = item.lucia_price ?? item.price;
+                const itemTotal = effectivePrice * item.quantity;
                 const itemTotalDisplay = Number(itemTotal).toFixed(2);
-                const itemPriceDisplay = Number(item.price).toFixed(2);
+                const itemPriceDisplay = Number(effectivePrice).toFixed(2);
 
                 return (
                   <View
@@ -197,6 +235,18 @@ export default function CheckoutScreen() {
             </View>
           );
         })}
+
+        {/* Special Note */}
+        {specialNote && specialNote.trim() ? (
+          <View style={[commonStyles.card, { marginBottom: 16 }]}>
+            <Text style={{ fontSize: 16, fontWeight: '700', color: colors.text, marginBottom: 8 }}>
+              📝 Special Note
+            </Text>
+            <Text style={{ fontSize: 14, color: colors.textLight }}>
+              {specialNote}
+            </Text>
+          </View>
+        ) : null}
 
         {/* Grand Total */}
         <View style={[commonStyles.card, { marginBottom: 24 }]}>
@@ -250,7 +300,7 @@ export default function CheckoutScreen() {
           disabled={placing}
         >
           <Text style={{ color: colors.white, fontWeight: '700', fontSize: 17 }}>
-            Place Order
+            Place Order via WhatsApp
           </Text>
         </TouchableOpacity>
       </ScrollView>
