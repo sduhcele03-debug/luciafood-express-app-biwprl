@@ -1,24 +1,12 @@
 
-import { Tabs, Redirect } from 'expo-router';
+import { Tabs } from 'expo-router';
 import { View } from 'react-native';
 import { colors } from '../../styles/commonStyles';
 import Icon from '../../components/Icon';
 import LuciaAIIcon from '../../components/LuciaAI/LuciaAIIcon';
 import { Platform } from 'react-native';
-import { useAuth } from '../../contexts/AuthContext';
-import LoadingScreen from '../../components/LoadingScreen';
 
 export default function TabLayout() {
-  const { user, loading } = useAuth();
-
-  if (loading) {
-    return <LoadingScreen />;
-  }
-
-  if (!user) {
-    return <Redirect href="/signin" />;
-  }
-
   return (
     <Tabs
       screenOptions={{

@@ -13,7 +13,6 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
@@ -44,33 +43,40 @@ export default function ProfileScreen() {
     if (!user) return;
 
     console.log('Profile: Loading profile for user:', user.id);
-    
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('user_id', user.id)  // Fixed: using user_id instead of id
-      .single();
 
-    if (error) {
-      console.log('Profile: Error loading profile:', error.message);
-      // If profile doesn't exist, create one with user metadata
-      const { data: userData } = await supabase.auth.getUser();
-      if (userData.user) {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
+      if (error) {
+        console.log('Profile: No existing profile found, using auth metadata');
+        try {
+          const { data: userData } = await supabase.auth.getUser();
+          if (userData?.user) {
+            setProfileData({
+              full_name: userData.user.user_metadata?.full_name || '',
+              phone: userData.user.user_metadata?.phone || '',
+              address: '',
+              avatar_url: '',
+            });
+          }
+        } catch {
+          console.log('Profile: Could not load auth metadata');
+        }
+      } else {
+        console.log('Profile: Profile loaded successfully');
         setProfileData({
-          full_name: userData.user.user_metadata?.full_name || '',
-          phone: userData.user.user_metadata?.phone || '',
-          address: '',
-          avatar_url: '',
+          full_name: data.full_name || '',
+          phone: data.phone_number || '',
+          address: data.address || '',
+          avatar_url: data.avatar_url || '',
         });
       }
-    } else {
-      console.log('Profile: Profile loaded successfully');
-      setProfileData({
-        full_name: data.full_name || '',
-        phone: data.phone_number || '',  // Fixed: using phone_number field
-        address: data.address || '',
-        avatar_url: data.avatar_url || '',
-      });
+    } catch {
+      console.log('Profile: Unexpected error loading profile');
     }
   }, [user]);
 
@@ -81,42 +87,58 @@ export default function ProfileScreen() {
   }, [user, loadProfile]);
 
   const updateProfile = async () => {
-    if (!user) return;
-
     if (!profileData.full_name || !profileData.phone) {
       Alert.alert('Error', 'Please fill in your name and phone number');
       return;
     }
 
+    console.log('Profile: Save Changes pressed');
     setLoading(true);
-    console.log('Profile: Updating profile for user:', user.id);
 
-    const { error } = await supabase
-      .from('profiles')
-      .upsert({
-        user_id: user.id,  // Fixed: using user_id instead of id
-        full_name: profileData.full_name,
-        phone_number: profileData.phone,  // Fixed: using phone_number field
-        address: profileData.address,
-        avatar_url: profileData.avatar_url,
-        email: user.email,
-        updated_at: new Date().toISOString(),
-      });
+    try {
+      if (user) {
+        console.log('Profile: Updating profile for user:', user.id);
+        const { error } = await supabase
+          .from('profiles')
+          .upsert({
+            user_id: user.id,
+            full_name: profileData.full_name,
+            phone_number: profileData.phone,
+            address: profileData.address,
+            avatar_url: profileData.avatar_url,
+            email: user.email,
+            updated_at: new Date().toISOString(),
+          });
 
-    if (error) {
-      console.log('Profile: Error updating profile:', error.message);
-      Alert.alert('Update Failed', error.message);
-    } else {
-      console.log('Profile: Profile updated successfully');
-      Alert.alert('Success', 'Profile updated successfully! Your delivery information will now be auto-filled in the cart.');
+        if (error) {
+          console.log('Profile: Error updating profile:', error.message);
+          Alert.alert('Update Failed', error.message);
+        } else {
+          console.log('Profile: Profile updated successfully');
+          Alert.alert('Success', 'Profile updated successfully! Your delivery information will now be auto-filled in the cart.');
+        }
+      } else {
+        // Guest: just confirm the local save
+        console.log('Profile: Saving profile locally (guest mode)');
+        Alert.alert('Saved', 'Your delivery information has been saved for this session.');
+      }
+    } catch {
+      console.log('Profile: Unexpected error saving profile');
+      Alert.alert('Error', 'Failed to save profile. Please try again.');
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   const pickImage = async () => {
+    if (!user) {
+      Alert.alert('Sign In Required', 'Please sign in to upload a profile photo.');
+      return;
+    }
+
+    console.log('Profile: Pick image pressed');
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    
+
     if (status !== 'granted') {
       Alert.alert('Permission needed', 'Please grant camera roll permissions to upload an avatar.');
       return;
@@ -165,8 +187,7 @@ export default function ProfileScreen() {
 
       setProfileData(prev => ({ ...prev, avatar_url: data.publicUrl }));
       console.log('Profile: Avatar uploaded successfully');
-      
-      // Auto-save the avatar URL to the profile
+
       await supabase
         .from('profiles')
         .upsert({
@@ -174,9 +195,8 @@ export default function ProfileScreen() {
           avatar_url: data.publicUrl,
           updated_at: new Date().toISOString(),
         });
-        
-    } catch (error) {
-      console.log('Profile: Avatar upload error:', error);
+    } catch {
+      console.log('Profile: Avatar upload failed');
       Alert.alert('Upload Failed', 'Failed to upload avatar');
     } finally {
       setUploading(false);
@@ -194,13 +214,19 @@ export default function ProfileScreen() {
           style: 'destructive',
           onPress: async () => {
             console.log('Profile: User signing out');
-            await signOut();
-            router.replace('/signin');
+            try {
+              await signOut();
+            } catch {
+              console.log('Profile: Error during sign out');
+            }
           },
         },
       ]
     );
   };
+
+  const userEmail = user?.email || '';
+  const isGuest = !user;
 
   return (
     <LinearGradient
@@ -216,7 +242,7 @@ export default function ProfileScreen() {
             contentContainerStyle={commonStyles.content}
             showsVerticalScrollIndicator={false}
           >
-            {/* Header with LuciaFood Express Branding */}
+            {/* Header */}
             <View style={{ alignItems: 'center', marginBottom: 32 }}>
               <Image
                 source={require('../assets/images/a7a8e731-a1de-42bf-9906-e66602c740a1.jpeg')}
@@ -264,23 +290,41 @@ export default function ProfileScreen() {
                     <Icon name="person" size={40} color={colors.textLight} />
                   )}
                 </TouchableOpacity>
-                
-                <TouchableOpacity onPress={pickImage} disabled={uploading}>
-                  <Text style={[commonStyles.link, { fontSize: 14 }]}>
-                    {uploading ? 'Uploading...' : 'Change Avatar'}
-                  </Text>
-                </TouchableOpacity>
+
+                {!isGuest && (
+                  <TouchableOpacity onPress={pickImage} disabled={uploading}>
+                    <Text style={[commonStyles.link, { fontSize: 14 }]}>
+                      {uploading ? 'Uploading...' : 'Change Avatar'}
+                    </Text>
+                  </TouchableOpacity>
+                )}
               </View>
 
-              {/* User Email */}
-              <View style={{ marginBottom: 24 }}>
-                <Text style={[commonStyles.text, { fontSize: 14, color: colors.textLight }]}>
-                  Email
-                </Text>
-                <Text style={[commonStyles.text, { fontSize: 16, marginBottom: 0 }]}>
-                  {user?.email}
-                </Text>
-              </View>
+              {/* User Email (only if signed in) */}
+              {!isGuest && (
+                <View style={{ marginBottom: 24 }}>
+                  <Text style={[commonStyles.text, { fontSize: 14, color: colors.textLight }]}>
+                    Email
+                  </Text>
+                  <Text style={[commonStyles.text, { fontSize: 16, marginBottom: 0 }]}>
+                    {userEmail}
+                  </Text>
+                </View>
+              )}
+
+              {/* Guest notice */}
+              {isGuest && (
+                <View style={{
+                  backgroundColor: colors.primary + '15',
+                  borderRadius: 10,
+                  padding: 12,
+                  marginBottom: 20,
+                }}>
+                  <Text style={{ fontSize: 14, color: colors.text, textAlign: 'center' }}>
+                    Save your delivery details below for faster checkout
+                  </Text>
+                </View>
+              )}
 
               {/* Full Name Input */}
               <TextInput
@@ -334,7 +378,7 @@ export default function ProfileScreen() {
                 marginBottom: 20,
                 fontStyle: 'italic',
               }}>
-                💡 Your delivery information will be automatically filled in the cart for faster checkout
+                Your delivery information will be automatically filled in the cart for faster checkout
               </Text>
 
               {/* Save Changes Button */}
@@ -357,24 +401,26 @@ export default function ProfileScreen() {
                 </Text>
               </TouchableOpacity>
 
-              {/* Sign Out Button */}
-              <TouchableOpacity
-                style={[
-                  buttonStyles.secondary,
-                  { marginTop: 16, borderColor: colors.error },
-                ]}
-                onPress={handleSignOut}
-              >
-                <Text
-                  style={{
-                    color: colors.error,
-                    fontSize: 16,
-                    fontWeight: '600',
-                  }}
+              {/* Sign Out Button — only shown when signed in */}
+              {!isGuest && (
+                <TouchableOpacity
+                  style={[
+                    buttonStyles.secondary,
+                    { marginTop: 16, borderColor: colors.error },
+                  ]}
+                  onPress={handleSignOut}
                 >
-                  Sign Out
-                </Text>
-              </TouchableOpacity>
+                  <Text
+                    style={{
+                      color: colors.error,
+                      fontSize: 16,
+                      fontWeight: '600',
+                    }}
+                  >
+                    Sign Out
+                  </Text>
+                </TouchableOpacity>
+              )}
             </View>
           </ScrollView>
         </KeyboardAvoidingView>

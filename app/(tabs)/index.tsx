@@ -10,12 +10,10 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Link, router } from 'expo-router';
-import { useAuth } from '../../contexts/AuthContext';
+import { router } from 'expo-router';
 import { supabase, Restaurant, MenuItem, addSteersMenuItems, initializeDatabase } from '../../lib/supabase';
 import { commonStyles, colors, buttonStyles } from '../../styles/commonStyles';
 import Icon from '../../components/Icon';
-import LoadingScreen from '../../components/LoadingScreen';
 
 // Import restaurant logos including new ones - PEDROS INTEGRATION
 const restaurantLogos = {
@@ -35,7 +33,6 @@ interface MenuItemWithRestaurant extends MenuItem {
 }
 
 export default function HomeScreen() {
-  const { user, loading } = useAuth();
   const [featuredRestaurants, setFeaturedRestaurants] = useState<Restaurant[]>([]);
   const [featuredMenuItems, setFeaturedMenuItems] = useState<MenuItemWithRestaurant[]>([]);
   const [loadingRestaurants, setLoadingRestaurants] = useState(true);
@@ -276,10 +273,6 @@ export default function HomeScreen() {
     );
   };
 
-  if (loading) {
-    return <LoadingScreen />;
-  }
-
   return (
     <SafeAreaView style={[commonStyles.container, { paddingBottom: 80 }]}>
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -457,25 +450,7 @@ export default function HomeScreen() {
           )}
         </View>
 
-        {/* Bottom CTA */}
-        {!user && (
-          <View style={{ padding: 20, alignItems: 'center' }}>
-            <Text style={[commonStyles.title, { marginBottom: 16, fontSize: 20 }]}>
-              Ready to order?
-            </Text>
-            <Link href="/signup" asChild>
-              <TouchableOpacity style={buttonStyles.primary}>
-                <Text style={{ 
-                  color: colors.white, 
-                  fontWeight: '700',
-                  fontSize: 16,
-                }}>
-                  Sign Up to Order Now
-                </Text>
-              </TouchableOpacity>
-            </Link>
-          </View>
-        )}
+
       </ScrollView>
     </SafeAreaView>
   );
