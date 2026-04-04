@@ -1,10 +1,8 @@
-
 import { Tabs } from 'expo-router';
-import { View } from 'react-native';
+import { View, Platform } from 'react-native';
 import { colors } from '../../styles/commonStyles';
 import Icon from '../../components/Icon';
 import LuciaAIIcon from '../../components/LuciaAI/LuciaAIIcon';
-import { Platform } from 'react-native';
 
 export default function TabLayout() {
   return (
@@ -55,12 +53,16 @@ export default function TabLayout() {
       }}
     >
       <Tabs.Screen
+        name="(home)"
+        options={{ href: null }}
+      />
+      <Tabs.Screen
         name="index"
         options={{
           title: 'Home',
           headerTitle: 'LuciaFood Express',
-          tabBarIcon: ({ color, size }) => (
-            <Icon name="home" size={size} color={color} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <Icon name={focused ? 'home' : 'home-outline'} size={size} color={color} />
           ),
         }}
       />
@@ -69,8 +71,8 @@ export default function TabLayout() {
         options={{
           title: 'Restaurants',
           headerTitle: 'Restaurants',
-          tabBarIcon: ({ color, size }) => (
-            <Icon name="restaurant" size={size} color={color} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <Icon name={focused ? 'fast-food' : 'fast-food-outline'} size={size} color={color} />
           ),
         }}
       />
@@ -79,8 +81,8 @@ export default function TabLayout() {
         options={{
           title: 'Services',
           headerTitle: 'Services',
-          tabBarIcon: ({ color, size }) => (
-            <Icon name="briefcase" size={size} color={color} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <Icon name={focused ? 'grid' : 'grid-outline'} size={size} color={color} />
           ),
         }}
       />
@@ -89,8 +91,8 @@ export default function TabLayout() {
         options={{
           title: 'Profile',
           headerTitle: 'Profile',
-          tabBarIcon: ({ color, size }) => (
-            <Icon name="person" size={size} color={color} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <Icon name={focused ? 'person' : 'person-outline'} size={size} color={color} />
           ),
         }}
       />
