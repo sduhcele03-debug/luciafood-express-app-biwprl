@@ -142,14 +142,14 @@ export default function CartScreen() {
   }, [promoCode, cart.selectedZone, getTotalDelivery]);
 
   const handleCheckout = useCallback(() => {
-    console.log('[CartScreen] Checkout button pressed');
+    console.log('[CartScreen] Checkout clicked', cart);
 
-    if (cart.restaurants.length === 0) {
-      Alert.alert('Empty Cart', 'Please add items to your cart before checkout');
+    if (!cart.restaurants || cart.restaurants.length === 0) {
+      Alert.alert('Your cart is empty', 'Please add items to your cart before checkout');
       return;
     }
     if (!cart.selectedZone) {
-      Alert.alert('Missing Delivery Zone', 'Please select your delivery area to continue');
+      Alert.alert('Please select a delivery zone', 'Please select your delivery area to continue');
       return;
     }
     if (!localName.trim()) {
@@ -305,7 +305,7 @@ export default function CartScreen() {
         {/* ── Cart Items Grouped by Restaurant ──────────────────────────── */}
         {cart.restaurants.map(restaurant => {
           const restaurantSubtotal = restaurant.items.reduce(
-            (sum, item) => sum + item.price * item.quantity,
+            (sum, item) => sum + (item.lucia_price ?? item.price) * item.quantity,
             0
           );
           const restaurantSubtotalDisplay = Number(restaurantSubtotal).toFixed(2);
@@ -346,9 +346,10 @@ export default function CartScreen() {
               </View>
 
               {restaurant.items.map(item => {
-                const itemTotal = item.price * item.quantity;
+                const effectivePrice = item.lucia_price ?? item.price;
+                const itemTotal = effectivePrice * item.quantity;
                 const itemTotalDisplay = Number(itemTotal).toFixed(2);
-                const itemPriceDisplay = Number(item.price).toFixed(2);
+                const itemPriceDisplay = Number(effectivePrice).toFixed(2);
 
                 return (
                   <View

@@ -103,6 +103,7 @@ export interface CartItem {
   id: string;
   name: string;
   price: number;
+  lucia_price?: number;
   quantity: number;
   image?: string;
 }
@@ -342,7 +343,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const getSubtotal = useCallback(() => {
     return cart.restaurants.reduce(
       (total, r) =>
-        total + r.items.reduce((s, i) => s + i.price * i.quantity, 0),
+        total + r.items.reduce((s, i) => s + (i.lucia_price ?? i.price) * i.quantity, 0),
       0
     );
   }, [cart]);

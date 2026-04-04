@@ -45,16 +45,7 @@ function getImageSource(url?: string): any {
   return FALLBACK_IMAGE;
 }
 
-// ─── Restaurant logos (hardcoded by name; Buyie's falls back to logo_url) ────
-const restaurantLogos: Record<string, any> = {
-  'KFC': require('../../assets/images/ea004ca1-a296-4e39-984b-2089e42444f5.jpeg'),
-  "Galito's Chicken": require('../../assets/images/f3b869c8-2861-4512-997d-1c12896caf88.jpeg'),
-  "Nando's": require('../../assets/images/23f5887f-3eee-46c9-a4fe-38bc1310eb7a.jpeg'),
-  'Spur': require('../../assets/images/a49cf35b-b89b-413e-8d90-f264b2fd9558.jpeg'),
-  'Hungry Lion': require('../../assets/images/8af68d59-ba87-4566-9b1c-897d59d34f63.jpeg'),
-  'Steers': require('../../assets/images/50beda68-6257-422c-94a0-312838d1cb22.jpeg'),
-  'Pedros': require('../../assets/images/774fbac8-ee5d-4ba9-8de3-b634430b39e8.jpeg'),
-};
+
 
 interface MenuItemWithRestaurant extends MenuItem {
   restaurant: {
@@ -244,7 +235,7 @@ export default function RestaurantsScreen() {
   };
 
   const renderRestaurant = (restaurant: Restaurant) => {
-    const logoSource = restaurantLogos[restaurant.name] || getImageSource(restaurant.logo_url || restaurant.image);
+    const hasLogo = !!restaurant.logo_url;
     return (
     <TouchableOpacity
       key={restaurant.id}
@@ -255,16 +246,32 @@ export default function RestaurantsScreen() {
       }}
     >
       <View style={{ flexDirection: 'row' }}>
-        <Image
-          source={logoSource}
-          style={{
-            width: 80,
-            height: 80,
-            borderRadius: 12,
-            marginRight: 16,
-          }}
-          resizeMode="cover"
-        />
+        {hasLogo ? (
+          <Image
+            source={{ uri: restaurant.logo_url! }}
+            style={{
+              width: 80,
+              height: 80,
+              borderRadius: 12,
+              marginRight: 16,
+            }}
+            resizeMode="cover"
+          />
+        ) : (
+          <View
+            style={{
+              width: 80,
+              height: 80,
+              borderRadius: 12,
+              marginRight: 16,
+              backgroundColor: '#E0E0E0',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Icon name="restaurant" size={32} color="#9E9E9E" />
+          </View>
+        )}
         <View style={{ flex: 1 }}>
           <Text style={{
             fontSize: 18,

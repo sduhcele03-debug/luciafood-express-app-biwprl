@@ -123,7 +123,8 @@ export default function RestaurantScreen() {
     const cartItem = {
       id: item.id,
       name: item.name,
-      price: item.lucia_price || item.price,
+      price: item.lucia_price ?? item.price,
+      lucia_price: item.lucia_price,
       quantity: 1,
       image: item.image_url,
     };
