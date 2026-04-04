@@ -30,7 +30,9 @@ module.exports = {
     '@typescript-eslint/no-empty-object-type': 'off',
     '@typescript-eslint/no-wrapper-object-types': 'off',
     'react/no-unescaped-entities': 'off',
-    'import/no-unresolved': 'error',
+    'import/no-unresolved': ['error', {
+      ignore: ['react-leaflet', 'leaflet', '@bacons/apple-targets']
+    }],
     'prefer-const': 'off',
     'react/prop-types': 1,
     'no-case-declarations': 'off',
