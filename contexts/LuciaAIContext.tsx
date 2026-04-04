@@ -4,21 +4,8 @@ import { usePathname } from 'expo-router';
 
 /**
  * LUCIA AI CONTEXT
- * 
+ *
  * Global state management for Lucia AI assistant.
- * 
- * Features:
- * - Screen-aware AI responses based on current route
- * - Mini view (35-40% height) with quick action buttons
- * - Full-screen chat view with message history
- * - WhatsApp escalation for complex issues
- * - Conversation history management
- * 
- * Usage:
- * 1. Wrap your app with <LuciaAIProvider>
- * 2. Use useLuciaAI() hook to access AI functionality
- * 3. Place <LuciaAIContainer> at root level for global access
- * 4. Add <LuciaAIIcon> to headers for easy access
  */
 
 type Message = {
@@ -43,7 +30,22 @@ type LuciaAIContextType = {
   currentScreen: string;
 };
 
-const LuciaAIContext = createContext<LuciaAIContextType | undefined>(undefined);
+const DEFAULT_CONTEXT: LuciaAIContextType = {
+  isVisible: false,
+  isExpanded: false,
+  messages: [],
+  isLoading: false,
+  showLucia: () => {},
+  hideLucia: () => {},
+  toggleLucia: () => {},
+  expandLucia: () => {},
+  collapseLucia: () => {},
+  sendMessage: async () => {},
+  clearMessages: () => {},
+  currentScreen: 'App',
+};
+
+const LuciaAIContext = createContext<LuciaAIContextType>(DEFAULT_CONTEXT);
 
 export function LuciaAIProvider({ children }: { children: ReactNode }) {
   const [isVisible, setIsVisible] = useState(false);
@@ -54,44 +56,53 @@ export function LuciaAIProvider({ children }: { children: ReactNode }) {
 
   const getCurrentScreenName = useCallback(() => {
     if (!pathname) return 'Unknown';
-    
+
     if (pathname === '/' || pathname === '/(tabs)' || pathname === '/(tabs)/index') return 'Home';
     if (pathname.includes('/restaurants')) return 'Restaurants';
     if (pathname.includes('/restaurant/')) return 'Restaurant';
     if (pathname.includes('/cart')) return 'Cart';
     if (pathname.includes('/profile')) return 'Profile';
     if (pathname.includes('/services')) return 'Services';
-    
+
     return 'App';
   }, [pathname]);
 
   const showLucia = useCallback(() => {
+    console.log('[LuciaAI] showLucia called');
     setIsVisible(true);
     setIsExpanded(false);
   }, []);
 
   const hideLucia = useCallback(() => {
+    console.log('[LuciaAI] hideLucia called');
     setIsVisible(false);
     setIsExpanded(false);
   }, []);
 
   const toggleLucia = useCallback(() => {
-    setIsVisible(prev => !prev);
-    if (isVisible) {
-      setIsExpanded(false);
-    }
-  }, [isVisible]);
+    console.log('[LuciaAI] toggleLucia called');
+    setIsVisible(prev => {
+      if (prev) {
+        setIsExpanded(false);
+      }
+      return !prev;
+    });
+  }, []);
 
   const expandLucia = useCallback(() => {
+    console.log('[LuciaAI] expandLucia called');
     setIsExpanded(true);
   }, []);
 
   const collapseLucia = useCallback(() => {
+    console.log('[LuciaAI] collapseLucia called');
     setIsExpanded(false);
   }, []);
 
   const sendMessage = useCallback(async (messageText: string) => {
     if (!messageText.trim()) return;
+
+    console.log('[LuciaAI] sendMessage:', messageText);
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -105,7 +116,7 @@ export function LuciaAIProvider({ children }: { children: ReactNode }) {
 
     try {
       const { supabase } = await import('../lib/supabase');
-      
+
       const conversationHistory = messages.map(msg => ({
         role: msg.role,
         content: msg.content,
@@ -142,8 +153,8 @@ export function LuciaAIProvider({ children }: { children: ReactNode }) {
         setMessages(prev => [...prev, whatsappMessage]);
       }
     } catch (error) {
-      console.error('Error sending message to Lucia AI:', error);
-      
+      console.error('[LuciaAI] Error sending message:', error);
+
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
@@ -157,6 +168,7 @@ export function LuciaAIProvider({ children }: { children: ReactNode }) {
   }, [messages, getCurrentScreenName]);
 
   const clearMessages = useCallback(() => {
+    console.log('[LuciaAI] clearMessages called');
     setMessages([]);
   }, []);
 
@@ -184,8 +196,5 @@ export function LuciaAIProvider({ children }: { children: ReactNode }) {
 
 export function useLuciaAI() {
   const context = useContext(LuciaAIContext);
-  if (context === undefined) {
-    throw new Error('useLuciaAI must be used within a LuciaAIProvider');
-  }
   return context;
 }
