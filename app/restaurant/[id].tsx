@@ -133,7 +133,7 @@ export default function RestaurantScreen() {
 
     console.log('[RestaurantScreen] Item added successfully:', item.name);
     Alert.alert('Added to Cart', `${item.name} has been added to your cart`);
-  }, [user, restaurant, addItem]);
+  }, [restaurant, addItem]);
 
   const handleCheckout = useCallback(() => {
     console.log("✅ Checkout clicked - cart items:", cart);
