@@ -20,9 +20,12 @@ const FALLBACK_IMAGE = require('../../assets/images/d7f42a0a-5ef2-4a49-861b-adbd
 const localLogos: Record<string, any> = {
   "Galito's": require('../../assets/images/8aaf7289-74dd-44c9-8e03-41194903ed49.png'),
   "KFC": require('../../assets/images/93b3d004-6de5-4738-bb5c-34fa87ca7363.png'),
-  "Shawarma King": require('../../assets/images/08c35478-8410-404d-aace-8f670e5955ec.png'),
+  "Shawarma King": require('../../assets/images/5521c853-ff17-4a25-b9a4-1e86892c1f5a.jpeg'),
   "Nando's": require('../../assets/images/3c258693-ad05-4d0e-aad0-78df8625ec29.png'),
   "Pedros": require('../../assets/images/8a13ccc7-7fbc-40a8-95bc-438fdc77b551.png'),
+  "Steers": require('../../assets/images/77623db5-82da-4b1e-9489-668e627268f6.png'),
+  "Spur": require('../../assets/images/24bb25eb-2955-413c-aeae-aa50e74691df.png'),
+  "Spur Steak Ranches": require('../../assets/images/24bb25eb-2955-413c-aeae-aa50e74691df.png'),
 };
 
 function getImageSource(url?: string): any {
