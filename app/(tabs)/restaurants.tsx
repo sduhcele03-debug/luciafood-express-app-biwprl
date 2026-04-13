@@ -17,10 +17,24 @@ import Icon from '../../components/Icon';
 
 const FALLBACK_IMAGE = require('../../assets/images/d7f42a0a-5ef2-4a49-861b-adbd16c8aad5.jpeg');
 
+const localLogos: Record<string, any> = {
+  "Galito's": require('../../assets/images/8aaf7289-74dd-44c9-8e03-41194903ed49.png'),
+  "KFC": require('../../assets/images/93b3d004-6de5-4738-bb5c-34fa87ca7363.png'),
+  "Shawarma King": require('../../assets/images/08c35478-8410-404d-aace-8f670e5955ec.png'),
+  "Nando's": require('../../assets/images/3c258693-ad05-4d0e-aad0-78df8625ec29.png'),
+  "Pedros": require('../../assets/images/8a13ccc7-7fbc-40a8-95bc-438fdc77b551.png'),
+};
+
 function getImageSource(url?: string): any {
   if (!url) return FALLBACK_IMAGE;
   if (url.startsWith('http')) return { uri: url };
   return FALLBACK_IMAGE;
+}
+
+function getLogoSource(name: string, logoUrl?: string): { source: any; isLocal: boolean } {
+  if (localLogos[name]) return { source: localLogos[name], isLocal: true };
+  if (logoUrl) return { source: { uri: logoUrl }, isLocal: false };
+  return { source: null, isLocal: false };
 }
 
 
@@ -213,7 +227,7 @@ export default function RestaurantsScreen() {
   };
 
   const renderRestaurant = (restaurant: Restaurant) => {
-    const hasLogo = !!restaurant.logo_url;
+    const logo = getLogoSource(restaurant.name, restaurant.logo_url ?? undefined);
     return (
     <TouchableOpacity
       key={restaurant.id}
@@ -224,22 +238,35 @@ export default function RestaurantsScreen() {
       }}
     >
       <View style={{ flexDirection: 'row' }}>
-        {hasLogo ? (
-          <Image
-            source={{ uri: restaurant.logo_url! }}
+        {logo.source ? (
+          <View
             style={{
-              width: 80,
-              height: 80,
+              width: 64,
+              height: 64,
               borderRadius: 12,
               marginRight: 16,
+              backgroundColor: '#FFFFFF',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: 6,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 1 },
+              shadowOpacity: 0.1,
+              shadowRadius: 4,
+              elevation: 2,
             }}
-            resizeMode="cover"
-          />
+          >
+            <Image
+              source={logo.source}
+              style={{ width: '100%', height: '100%', borderRadius: 8 }}
+              resizeMode="contain"
+            />
+          </View>
         ) : (
           <View
             style={{
-              width: 80,
-              height: 80,
+              width: 64,
+              height: 64,
               borderRadius: 12,
               marginRight: 16,
               backgroundColor: '#E0E0E0',
@@ -247,7 +274,7 @@ export default function RestaurantsScreen() {
               justifyContent: 'center',
             }}
           >
-            <Icon name="restaurant" size={32} color="#9E9E9E" />
+            <Icon name="restaurant" size={28} color="#9E9E9E" />
           </View>
         )}
         <View style={{ flex: 1 }}>
