@@ -25,6 +25,8 @@ export interface Restaurant {
   rating?: number;
   delivery_time?: string;
   delivery_fee?: number;
+  /** JSONB map of zone name → fee in Rands, e.g. { "St Lucia": 15, "Nordale": 55 } */
+  delivery_fees?: Record<string, number>;
   is_featured?: boolean;
   min_order: number;
   delivery_from: number;

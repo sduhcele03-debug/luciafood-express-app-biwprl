@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
-import { useCart, DELIVERY_ZONES, RESTAURANT_DELIVERY_FEES } from '../contexts/CartContext';
+import { useCart, DELIVERY_ZONES } from '../contexts/CartContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from '../components/Icon';
 import LuciaAIIcon from '../components/LuciaAI/LuciaAIIcon';
@@ -153,6 +153,20 @@ export default function CartScreen() {
       Alert.alert('Please select a delivery zone', 'Please select your delivery area to continue');
       return;
     }
+
+    // Validate that every restaurant in the cart has a valid fee for the selected zone
+    for (const r of cart.restaurants) {
+      const fee = r.delivery_fees?.[cart.selectedZone];
+      if (fee === undefined) {
+        console.warn(`[CartScreen] No delivery fee for ${r.restaurantName} → zone "${cart.selectedZone}"`);
+        Alert.alert(
+          'Delivery Not Available',
+          `${r.restaurantName} does not deliver to ${cart.selectedZone}. Please remove it from your cart or choose a different zone.`
+        );
+        return;
+      }
+    }
+
     if (!localName.trim()) {
       Alert.alert('Missing Information', 'Please enter your full name');
       return;
@@ -241,13 +255,9 @@ export default function CartScreen() {
             >
               <Picker.Item label="Select delivery zone..." value="" color={colors.textLight} />
               {DELIVERY_ZONES.map(zone => {
-                const isBuyies = cart.restaurants.length > 0 &&
-                  (cart.restaurants[0].restaurantName.toLowerCase().includes('buyie') ||
-                   cart.restaurants[0].restaurantName.toLowerCase().includes('breeze'));
-                const feeTable = isBuyies
-                  ? RESTAURANT_DELIVERY_FEES.BUYIES_BASE
-                  : RESTAURANT_DELIVERY_FEES.DEFAULT_TOWN_BASE;
-                const fee = feeTable[zone];
+                // Show fee from the first restaurant's delivery_fees (all restaurants share the same zone list)
+                const firstRestaurant = cart.restaurants[0];
+                const fee = firstRestaurant?.delivery_fees?.[zone];
                 const feeLabel = fee !== undefined ? ` - R${fee}` : '';
                 return (
                   <Picker.Item
@@ -310,7 +320,13 @@ export default function CartScreen() {
             0
           );
           const restaurantSubtotalDisplay = Number(restaurantSubtotal).toFixed(2);
-          const deliveryFeeDisplay = Number(restaurant.deliveryFee).toFixed(2);
+
+          // Derive fee strictly from restaurant.delivery_fees[selectedZone]
+          const zoneFee = cart.selectedZone
+            ? restaurant.delivery_fees?.[cart.selectedZone]
+            : undefined;
+          const feeUnavailable = cart.selectedZone && zoneFee === undefined;
+          const deliveryFeeDisplay = zoneFee !== undefined ? `R${Number(zoneFee).toFixed(2)}` : '—';
 
           return (
             <View key={restaurant.restaurantId} style={[commonStyles.card, { marginBottom: 20 }]}>
@@ -433,14 +449,29 @@ export default function CartScreen() {
                     R{restaurantSubtotalDisplay}
                   </Text>
                 </View>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                   <Text style={{ fontSize: 14, color: colors.textLight }}>
-                    Delivery{cart.selectedZone ? ` to ${cart.selectedZone}` : ''}
+                    {cart.selectedZone ? `Delivery to ${cart.selectedZone}` : 'Delivery'}
                   </Text>
-                  <Text style={{ fontSize: 14, fontWeight: '600', color: colors.primary }}>
-                    R{deliveryFeeDisplay}
-                  </Text>
+                  {!cart.selectedZone ? (
+                    <Text style={{ fontSize: 13, color: colors.textLight, fontStyle: 'italic' }}>
+                      Select a delivery zone
+                    </Text>
+                  ) : feeUnavailable ? (
+                    <Text style={{ fontSize: 13, color: colors.error, fontWeight: '600' }}>
+                      Zone not available
+                    </Text>
+                  ) : (
+                    <Text style={{ fontSize: 14, fontWeight: '600', color: colors.primary }}>
+                      {deliveryFeeDisplay}
+                    </Text>
+                  )}
                 </View>
+                {feeUnavailable ? (
+                  <Text style={{ fontSize: 12, color: colors.error, marginTop: 6, fontStyle: 'italic' }}>
+                    ⚠️ {restaurant.restaurantName} does not deliver to {cart.selectedZone}
+                  </Text>
+                ) : null}
               </View>
             </View>
           );
@@ -458,8 +489,14 @@ export default function CartScreen() {
           </View>
 
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: colors.backgroundAlt + '40' }}>
-            <Text style={{ fontSize: 16, color: colors.text, fontWeight: '500' }}>Total delivery</Text>
-            <Text style={{ fontSize: 16, color: colors.text, fontWeight: '600' }}>R{totalDeliveryDisplay}</Text>
+            <Text style={{ fontSize: 16, color: colors.text, fontWeight: '500' }}>
+              {cart.selectedZone ? `Total delivery (${cart.selectedZone})` : 'Total delivery'}
+            </Text>
+            {cart.selectedZone ? (
+              <Text style={{ fontSize: 16, color: colors.text, fontWeight: '600' }}>R{totalDeliveryDisplay}</Text>
+            ) : (
+              <Text style={{ fontSize: 14, color: colors.textLight, fontStyle: 'italic' }}>Select zone</Text>
+            )}
           </View>
 
           {promoDiscount > 0 && (

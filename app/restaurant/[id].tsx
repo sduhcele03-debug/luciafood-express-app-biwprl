@@ -123,7 +123,7 @@ export default function RestaurantScreen() {
       image: item.image_url,
     };
 
-    const result = addItem(item.restaurant_id, restaurant.name, cartItem);
+    const result = addItem(item.restaurant_id, restaurant.name, cartItem, restaurant.delivery_fees ?? {});
 
     if (!result.success) {
       console.log('[RestaurantScreen] addItem failed:', result.error);

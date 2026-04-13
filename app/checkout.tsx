@@ -35,6 +35,17 @@ export default function CheckoutScreen() {
 
   const handlePlaceOrder = async () => {
     console.log('[CheckoutScreen] Place Order button pressed');
+    console.log('[CheckoutScreen] Zone:', cart.selectedZone, '| Grand total: R' + grandTotalDisplay);
+
+    // Final guard: ensure every restaurant has a valid fee for the selected zone
+    for (const r of cart.restaurants) {
+      const fee = r.delivery_fees?.[cart.selectedZone];
+      if (fee === undefined) {
+        console.warn(`[CheckoutScreen] Missing delivery fee for ${r.restaurantName} → zone "${cart.selectedZone}"`);
+        return;
+      }
+    }
+
     setPlacing(true);
 
     const restaurantBlocks = cart.restaurants.map(restaurant => {
@@ -42,13 +53,18 @@ export default function CheckoutScreen() {
         (sum, item) => sum + (item.lucia_price ?? item.price) * item.quantity,
         0
       );
+      const zoneFee = restaurant.delivery_fees?.[cart.selectedZone] ?? 0;
       const itemLines = restaurant.items
         .map(item => {
           const price = item.lucia_price ?? item.price;
           return `${item.quantity} x ${item.name} - R${Number(price).toFixed(2)}`;
         })
         .join('\n');
-      return `🏪 ${restaurant.restaurantName}:\n${itemLines}\nSubtotal: R${Number(restaurantSubtotal).toFixed(2)}`;
+      return (
+        `🏪 ${restaurant.restaurantName}:\n${itemLines}\n` +
+        `Subtotal: R${Number(restaurantSubtotal).toFixed(2)}\n` +
+        `Delivery to ${cart.selectedZone}: R${Number(zoneFee).toFixed(2)}`
+      );
     }).join('\n\n');
 
     const noteText = specialNote && specialNote.trim() ? specialNote.trim() : 'None';
@@ -76,7 +92,7 @@ ${noteText}
 
 Please confirm this order and provide estimated delivery time.`;
 
-    console.log('✅ WhatsApp message generated');
+    console.log('[CheckoutScreen] WhatsApp message generated');
 
     const encoded = encodeURIComponent(message);
     const url = `https://wa.me/27743844253?text=${encoded}`;
@@ -172,7 +188,11 @@ Please confirm this order and provide estimated delivery time.`;
             0
           );
           const restaurantSubtotalDisplay = Number(restaurantSubtotal).toFixed(2);
-          const deliveryFeeDisplay = Number(restaurant.deliveryFee).toFixed(2);
+
+          // Derive fee strictly from restaurant.delivery_fees[selectedZone]
+          const zoneFee = restaurant.delivery_fees?.[cart.selectedZone];
+          const feeUnavailable = zoneFee === undefined;
+          const deliveryFeeDisplay = zoneFee !== undefined ? `R${Number(zoneFee).toFixed(2)}` : '—';
 
           return (
             <View key={restaurant.restaurantId} style={[commonStyles.card, { marginBottom: 16 }]}>
@@ -223,14 +243,25 @@ Please confirm this order and provide estimated delivery time.`;
                     R{restaurantSubtotalDisplay}
                   </Text>
                 </View>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                   <Text style={{ fontSize: 14, color: colors.textLight }}>
                     Delivery to {cart.selectedZone}
                   </Text>
-                  <Text style={{ fontSize: 14, fontWeight: '600', color: colors.primary }}>
-                    R{deliveryFeeDisplay}
-                  </Text>
+                  {feeUnavailable ? (
+                    <Text style={{ fontSize: 13, color: colors.error, fontWeight: '600' }}>
+                      Zone not available
+                    </Text>
+                  ) : (
+                    <Text style={{ fontSize: 14, fontWeight: '600', color: colors.primary }}>
+                      {deliveryFeeDisplay}
+                    </Text>
+                  )}
                 </View>
+                {feeUnavailable && (
+                  <Text style={{ fontSize: 12, color: colors.error, marginTop: 6, fontStyle: 'italic' }}>
+                    ⚠️ {restaurant.restaurantName} does not deliver to {cart.selectedZone}
+                  </Text>
+                )}
               </View>
             </View>
           );
@@ -274,7 +305,9 @@ Please confirm this order and provide estimated delivery time.`;
             borderBottomWidth: 1,
             borderBottomColor: colors.backgroundAlt,
           }}>
-            <Text style={{ fontSize: 15, color: colors.text, fontWeight: '500' }}>Total delivery</Text>
+            <Text style={{ fontSize: 15, color: colors.text, fontWeight: '500' }}>
+              Delivery to {cart.selectedZone}
+            </Text>
             <Text style={{ fontSize: 15, color: colors.text, fontWeight: '600' }}>R{totalDeliveryDisplay}</Text>
           </View>
 

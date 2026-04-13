@@ -1,8 +1,7 @@
 
-import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
-import { supabase } from '../lib/supabase';
+import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 
-// ─── Delivery Zone Data ───────────────────────────────────────────────────────
+// ─── Delivery Zone List ───────────────────────────────────────────────────────
 
 export const DELIVERY_ZONES = [
   'Nordale',
@@ -17,85 +16,6 @@ export const DELIVERY_ZONES = [
 ] as const;
 
 export type DeliveryZone = typeof DELIVERY_ZONES[number];
-
-// Fallback static fees used until Supabase data loads
-export const RESTAURANT_DELIVERY_FEES: Record<string, Record<string, number>> = {
-  DEFAULT_TOWN_BASE: {
-    'Nordale': 30,
-    'KwaMsane': 30,
-    'Nkodibe': 25,
-    'Mtubatuba Town': 15,
-    'Riverview': 25,
-    'Dukuduku (Ezwenelisha)': 55,
-    'Monzi Golf Club': 55,
-    'Khula Village': 55,
-    'St Lucia': 65,
-  },
-  BUYIES_BASE: {
-    'Nordale': 35,
-    'KwaMsane': 60,
-    'Nkodibe': 45,
-    'Mtubatuba Town': 40,
-    'Riverview': 45,
-    'Dukuduku (Ezwenelisha)': 25,
-    'Monzi Golf Club': 25,
-    'Khula Village': 15,
-    'St Lucia': 20,
-  },
-};
-
-// ─── Supabase delivery_fees cache ─────────────────────────────────────────────
-// Map: restaurantId -> zone_name -> fee
-type DeliveryFeesCache = Record<string, Record<string, number>>;
-let deliveryFeesCache: DeliveryFeesCache = {};
-let deliveryFeesCacheLoaded = false;
-
-async function loadDeliveryFeesCache(): Promise<void> {
-  if (deliveryFeesCacheLoaded) return;
-  try {
-    console.log('[CartContext] Loading delivery_fees from Supabase...');
-    const { data, error } = await supabase
-      .from('delivery_fees')
-      .select('restaurant_id, zone_name, fee');
-    if (error) {
-      console.warn('[CartContext] Could not load delivery_fees:', error.message);
-      return;
-    }
-    const cache: DeliveryFeesCache = {};
-    for (const row of data || []) {
-      if (!cache[row.restaurant_id]) cache[row.restaurant_id] = {};
-      cache[row.restaurant_id][row.zone_name] = Number(row.fee);
-    }
-    deliveryFeesCache = cache;
-    deliveryFeesCacheLoaded = true;
-    console.log(`[CartContext] Loaded delivery_fees for ${Object.keys(cache).length} restaurants`);
-  } catch (err) {
-    console.warn('[CartContext] Unexpected error loading delivery_fees:', err);
-  }
-}
-
-function getDeliveryFeeFromCache(restaurantId: string, zone: string): number | undefined {
-  const restaurantFees = deliveryFeesCache[restaurantId];
-  if (restaurantFees && restaurantFees[zone] !== undefined) {
-    return restaurantFees[zone];
-  }
-  return undefined;
-}
-
-function getDeliveryFeeFallback(restaurantName: string, zone: string): number | undefined {
-  const name = restaurantName.toLowerCase();
-  const table =
-    name.includes('buyie') || name.includes('breeze')
-      ? RESTAURANT_DELIVERY_FEES.BUYIES_BASE
-      : RESTAURANT_DELIVERY_FEES.DEFAULT_TOWN_BASE;
-  return table[zone];
-}
-
-function getDeliveryFee(restaurantId: string, restaurantName: string, zone: string): number | undefined {
-  const cached = getDeliveryFeeFromCache(restaurantId, zone);
-  if (cached !== undefined) return cached;
-  return getDeliveryFeeFallback(restaurantName, zone);
-}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -112,6 +32,9 @@ export interface CartRestaurant {
   restaurantId: string;
   restaurantName: string;
   items: CartItem[];
+  /** Zone → fee map sourced directly from restaurant.delivery_fees */
+  delivery_fees: Record<string, number>;
+  /** Resolved fee for the currently selected zone (0 when no zone selected) */
   deliveryFee: number;
 }
 
@@ -130,7 +53,8 @@ interface CartContextType {
   addItem: (
     restaurantId: string,
     restaurantName: string,
-    item: CartItem
+    item: CartItem,
+    restaurantDeliveryFees?: Record<string, number>
   ) => { success: boolean; error?: string };
   removeItem: (restaurantId: string, itemId: string) => void;
   updateQuantity: (restaurantId: string, itemId: string, quantity: number) => void;
@@ -170,23 +94,32 @@ export function useCart() {
   return context;
 }
 
+// ─── Fee helpers ──────────────────────────────────────────────────────────────
+
+/**
+ * Resolve the delivery fee for a given zone from the restaurant's delivery_fees map.
+ * Returns undefined when the zone is not covered.
+ */
+function resolveDeliveryFee(
+  delivery_fees: Record<string, number> | undefined,
+  zone: string
+): number | undefined {
+  if (!delivery_fees || !zone) return undefined;
+  const fee = delivery_fees[zone];
+  return fee !== undefined ? Number(fee) : undefined;
+}
+
 // ─── Provider ─────────────────────────────────────────────────────────────────
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [cart, setCart] = useState<CartState>(INITIAL_CART);
 
-  // Load delivery fees from Supabase on mount
-  useEffect(() => {
-    loadDeliveryFeesCache().catch(err => {
-      console.warn('[CartContext] Failed to load delivery fees cache:', err);
-    });
-  }, []);
-
   const addItem = useCallback(
     (
       restaurantId: string,
       restaurantName: string,
-      item: CartItem
+      item: CartItem,
+      restaurantDeliveryFees?: Record<string, number>
     ): { success: boolean; error?: string } => {
       console.log(`[Cart] addItem: "${item.name}" from "${restaurantName}" (${restaurantId})`);
 
@@ -221,9 +154,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
           return prev;
         }
 
-        // Check zone support (only if a zone is selected)
+        const fees = restaurantDeliveryFees ?? {};
+
+        // Check zone support (only if a zone is already selected)
         if (prev.selectedZone) {
-          const fee = getDeliveryFee(restaurantId, restaurantName, prev.selectedZone);
+          const fee = resolveDeliveryFee(fees, prev.selectedZone);
           if (fee === undefined) {
             console.log(`[Cart] addItem blocked: restaurant does not deliver to ${prev.selectedZone}`);
             result = {
@@ -237,9 +172,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
             restaurantId,
             restaurantName,
             items: [{ ...item }],
+            delivery_fees: fees,
             deliveryFee: fee,
           };
-          console.log(`[Cart] New restaurant added with delivery fee R${fee}`);
+          console.log(`[Cart] New restaurant added with delivery fee R${fee} to ${prev.selectedZone}`);
           return { ...prev, restaurants: [...prev.restaurants, newRestaurant] };
         }
 
@@ -248,6 +184,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
           restaurantId,
           restaurantName,
           items: [{ ...item }],
+          delivery_fees: fees,
           deliveryFee: 0,
         };
         console.log(`[Cart] New restaurant added (no zone selected yet)`);
@@ -318,8 +255,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
     console.log(`[Cart] setDeliveryZone: "${zone}"`);
     setCart(prev => {
       const updatedRestaurants = prev.restaurants.map(r => {
-        const fee = getDeliveryFee(r.restaurantId, r.restaurantName, zone);
-        return { ...r, deliveryFee: fee ?? 0 };
+        const fee = resolveDeliveryFee(r.delivery_fees, zone);
+        const resolvedFee = fee !== undefined ? fee : 0;
+        console.log(`[Cart] setDeliveryZone: ${r.restaurantName} → zone "${zone}" → fee R${resolvedFee}`);
+        return { ...r, deliveryFee: resolvedFee };
       });
       return { ...prev, selectedZone: zone, restaurants: updatedRestaurants };
     });
