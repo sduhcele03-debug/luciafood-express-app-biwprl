@@ -241,19 +241,13 @@ export default function CartScreen() {
               style={{ color: cart.selectedZone ? colors.text : colors.textLight }}
             >
               <Picker.Item label="Select delivery zone..." value="" color={colors.textLight} />
-              {DELIVERY_ZONES.map(zone => {
-                // Show fee from the first restaurant's delivery_fees (all restaurants share the same zone list)
-                const firstRestaurant = cart.restaurants[0];
-                const fee = firstRestaurant?.delivery_fees?.[zone];
-                const feeLabel = fee !== undefined ? ` - R${fee}` : '';
-                return (
-                  <Picker.Item
-                    key={zone}
-                    label={`${zone}${feeLabel}`}
-                    value={zone}
-                  />
-                );
-              })}
+              {DELIVERY_ZONES.map(zone => (
+                <Picker.Item
+                  key={zone}
+                  label={zone}
+                  value={zone}
+                />
+              ))}
             </Picker>
           </View>
           {!cart.selectedZone && (
@@ -439,25 +433,10 @@ export default function CartScreen() {
                   <Text style={{ fontSize: 14, color: colors.textLight }}>
                     {cart.selectedZone ? `Delivery to ${cart.selectedZone}` : 'Delivery'}
                   </Text>
-                  {!cart.selectedZone ? (
-                    <Text style={{ fontSize: 13, color: colors.textLight, fontStyle: 'italic' }}>
-                      Select a delivery zone
-                    </Text>
-                  ) : feeUnavailable ? (
-                    <Text style={{ fontSize: 13, color: colors.error, fontWeight: '600' }}>
-                      Zone not available
-                    </Text>
-                  ) : (
-                    <Text style={{ fontSize: 14, fontWeight: '600', color: colors.primary }}>
-                      {deliveryFeeDisplay}
-                    </Text>
-                  )}
-                </View>
-                {feeUnavailable ? (
-                  <Text style={{ fontSize: 12, color: colors.error, marginTop: 6, fontStyle: 'italic' }}>
-                    ⚠️ {restaurant.restaurantName} does not deliver to {cart.selectedZone}
+                  <Text style={{ fontSize: 14, fontWeight: '600', color: colors.primary }}>
+                    {deliveryFeeDisplay}
                   </Text>
-                ) : null}
+                </View>
               </View>
             </View>
           );
