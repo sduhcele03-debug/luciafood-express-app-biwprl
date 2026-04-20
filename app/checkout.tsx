@@ -37,15 +37,6 @@ export default function CheckoutScreen() {
     console.log('[CheckoutScreen] Place Order button pressed');
     console.log('[CheckoutScreen] Zone:', cart.selectedZone, '| Grand total: R' + grandTotalDisplay);
 
-    // Final guard: ensure every restaurant has a valid fee for the selected zone
-    for (const r of cart.restaurants) {
-      const fee = r.delivery_fees?.[cart.selectedZone];
-      if (fee === undefined) {
-        console.warn(`[CheckoutScreen] Missing delivery fee for ${r.restaurantName} → zone "${cart.selectedZone}"`);
-        return;
-      }
-    }
-
     setPlacing(true);
 
     const restaurantBlocks = cart.restaurants.map(restaurant => {
@@ -191,7 +182,6 @@ Please confirm this order and provide estimated delivery time.`;
 
           // Derive fee strictly from restaurant.delivery_fees[selectedZone]
           const zoneFee = restaurant.delivery_fees?.[cart.selectedZone];
-          const feeUnavailable = zoneFee === undefined;
           const deliveryFeeDisplay = zoneFee !== undefined ? `R${Number(zoneFee).toFixed(2)}` : '—';
 
           return (
@@ -247,21 +237,10 @@ Please confirm this order and provide estimated delivery time.`;
                   <Text style={{ fontSize: 14, color: colors.textLight }}>
                     Delivery to {cart.selectedZone}
                   </Text>
-                  {feeUnavailable ? (
-                    <Text style={{ fontSize: 13, color: colors.error, fontWeight: '600' }}>
-                      Zone not available
-                    </Text>
-                  ) : (
-                    <Text style={{ fontSize: 14, fontWeight: '600', color: colors.primary }}>
-                      {deliveryFeeDisplay}
-                    </Text>
-                  )}
-                </View>
-                {feeUnavailable && (
-                  <Text style={{ fontSize: 12, color: colors.error, marginTop: 6, fontStyle: 'italic' }}>
-                    ⚠️ {restaurant.restaurantName} does not deliver to {cart.selectedZone}
+                  <Text style={{ fontSize: 14, fontWeight: '600', color: colors.primary }}>
+                    {deliveryFeeDisplay}
                   </Text>
-                )}
+                </View>
               </View>
             </View>
           );

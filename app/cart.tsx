@@ -154,19 +154,6 @@ export default function CartScreen() {
       return;
     }
 
-    // Validate that every restaurant in the cart has a valid fee for the selected zone
-    for (const r of cart.restaurants) {
-      const fee = r.delivery_fees?.[cart.selectedZone];
-      if (fee === undefined) {
-        console.warn(`[CartScreen] No delivery fee for ${r.restaurantName} → zone "${cart.selectedZone}"`);
-        Alert.alert(
-          'Delivery Not Available',
-          `${r.restaurantName} does not deliver to ${cart.selectedZone}. Please remove it from your cart or choose a different zone.`
-        );
-        return;
-      }
-    }
-
     if (!localName.trim()) {
       Alert.alert('Missing Information', 'Please enter your full name');
       return;
@@ -325,7 +312,6 @@ export default function CartScreen() {
           const zoneFee = cart.selectedZone
             ? restaurant.delivery_fees?.[cart.selectedZone]
             : undefined;
-          const feeUnavailable = cart.selectedZone && zoneFee === undefined;
           const deliveryFeeDisplay = zoneFee !== undefined ? `R${Number(zoneFee).toFixed(2)}` : '—';
 
           return (

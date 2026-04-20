@@ -145,7 +145,8 @@ export default function RestaurantScreen() {
     const cartCount = getItemQuantity(item.id);
     const rawPrice = item.lucia_price ?? item.base_price ?? item.price;
     const displayPrice = Number(rawPrice).toFixed(2);
-    const imageSource = getImageSource(item.image_url);
+    const itemImageUrl = item.image_url || (restaurant?.name === 'Shawarma King' ? restaurant?.logo_url : undefined);
+    const imageSource = getImageSource(itemImageUrl);
 
     return (
       <View key={item.id} style={[commonStyles.card, { marginBottom: 16 }]}>

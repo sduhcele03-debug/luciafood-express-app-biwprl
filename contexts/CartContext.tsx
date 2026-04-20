@@ -156,38 +156,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
         const fees = restaurantDeliveryFees ?? {};
 
-        // Check zone support (only if a zone is already selected)
-        if (prev.selectedZone) {
-          const fee = resolveDeliveryFee(fees, prev.selectedZone);
-          if (fee === undefined) {
-            console.log(`[Cart] addItem blocked: restaurant does not deliver to ${prev.selectedZone}`);
-            result = {
-              success: false,
-              error: 'This restaurant does not deliver to your selected area',
-            };
-            return prev;
-          }
-
-          const newRestaurant: CartRestaurant = {
-            restaurantId,
-            restaurantName,
-            items: [{ ...item }],
-            delivery_fees: fees,
-            deliveryFee: fee,
-          };
-          console.log(`[Cart] New restaurant added with delivery fee R${fee} to ${prev.selectedZone}`);
-          return { ...prev, restaurants: [...prev.restaurants, newRestaurant] };
-        }
-
-        // No zone selected yet — add with fee 0, will recalculate when zone is set
+        const resolvedFee = prev.selectedZone ? (resolveDeliveryFee(fees, prev.selectedZone) ?? 0) : 0;
         const newRestaurant: CartRestaurant = {
           restaurantId,
           restaurantName,
           items: [{ ...item }],
           delivery_fees: fees,
-          deliveryFee: 0,
+          deliveryFee: resolvedFee,
         };
-        console.log(`[Cart] New restaurant added (no zone selected yet)`);
+        console.log(`[Cart] New restaurant added with delivery fee R${resolvedFee} to "${prev.selectedZone || 'no zone'}"`);
         return { ...prev, restaurants: [...prev.restaurants, newRestaurant] };
       });
 
